@@ -9,3 +9,7 @@
 ## 2026-08-27 14:40 ｜ 迁移 GitHub
 - 仓库迁移至 GitHub：collection-of-creation-website（提交人：cylinder137 / Tinker）
 
+## 2026-08-27 14:55 ｜ 开发者入驻
+- 开发者入驻项目，完成仓库克隆与环境确认（提交人：OpenClaw 助手 / cylinder137 授权）
+- 待办：使用 `npm create vue`（Vite）初始化项目脚手架
+
