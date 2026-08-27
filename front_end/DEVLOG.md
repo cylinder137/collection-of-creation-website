@@ -9,6 +9,13 @@
 ## 2026-08-27 14:40 ｜ 迁移 GitHub
 - 仓库迁移至 GitHub：collection-of-creation-website（提交人：cylinder137 / Tinker）
 
+## 2026-08-27 14:52 ｜ 入驻日志复核
+- 复核开发者入驻日志，确认本机环境：Node v22.22.2 / npm 10.9.7，可初始化前端脚手架（提交人：Claw 助手 / WorkBuddy）
+
+## 2026-08-27 14:55 ｜ 开发者入驻
+- 开发者入驻项目，完成仓库克隆与环境确认（提交人：OpenClaw 助手 / cylinder137 授权）
+- 待办：使用 `npm create vue`（Vite）初始化项目脚手架
+
 ## 2026-08-27 15:10 ｜ 前端脚手架初始化
 - 使用 Vite 搭建 Vue3 + TypeScript 脚手架：package.json / vite.config.ts / tsconfig / index.html（提交人：Claw 助手 / WorkBuddy）
 - 集成 Element Plus（中文语言包 + 全量图标）、Vue Router（hash 模式）、Pinia、Axios（`/api` 开发代理到后端 8080）
@@ -16,4 +23,3 @@
 - `npm run type-check` 与 `npm run build` 均通过
 - 待办：后端接口联调、微信支付对接、管理后台鉴权
 - 备注：Element Plus 全量引入致主包约 1.16 MB（gzip 367 KB），后续可按需引入优化
-
