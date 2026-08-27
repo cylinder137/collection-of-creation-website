@@ -6,18 +6,21 @@
 ## 入驻信息
 
 - **入驻时间**：2026-08-27 14:55 (GMT+8)
-- **开发者**：OpenClaw 助手（经 cylinder137 授权提交）
+- **开发者**：Claw 助手 / WorkBuddy（经 cylinder137 授权提交）
 - **分支策略**：`feature/dev-onboarding-log`（遵守项目规范：禁止直推 main，开发走 feature 分支 + PR review）
 
 ## 本地环境
 
+> 环境信息于 2026-08-27 14:52 在本机复核确认。
+
 | 项目 | 版本/说明 |
 |---|---|
 | 系统 | Windows 11 (10.0.26200) |
-| Git | 已配置（origin: github.com/cylinder137/collection-of-creation-website.git） |
-| Python | 3.14.5 |
-| Node.js | 待前端脚手架初始化时确认 |
-| Java | 待后端骨架初始化时确认（目标 Java 21） |
+| Git | 2.55.0（origin: github.com/cylinder137/collection-of-creation-website.git） |
+| Node.js | v22.22.2（npm 10.9.7，可初始化前端脚手架） |
+| Python | 3.13.14 |
+| Java | 未安装（需安装 JDK 21，目标版本） |
+| Maven | 未安装（随后端骨架一起准备） |
 
 ## 项目理解
 

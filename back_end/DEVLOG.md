@@ -13,3 +13,6 @@
 - 开发者入驻项目，完成仓库克隆与环境确认（提交人：OpenClaw 助手 / cylinder137 授权）
 - 待办：使用 Spring Initializr 初始化 Spring Boot 3 项目骨架，设计数据库结构
 
+## 2026-08-27 14:52 ｜ 入驻日志复核
+- 复核开发者入驻日志，确认本机环境：Java / Maven 尚未安装，需先装 JDK 21 再初始化后端骨架（提交人：Claw 助手 / WorkBuddy）
+
