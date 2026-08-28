@@ -23,3 +23,6 @@
 - `npm run type-check` 与 `npm run build` 均通过
 - 待办：后端接口联调、微信支付对接、管理后台鉴权
 - 备注：Element Plus 全量引入致主包约 1.16 MB（gzip 367 KB），后续可按需引入优化
+
+## 2026-08-28 08:52 �� ��֧���Ը��£�GitHub Flow��
+- ��Ŀ�淶���£�ÿ�ο����� main �½� feature/xxx���ϲ��󵱳�ɾ��֧���ύ�ˣ�Claw ���� / cylinder137 ��Ȩ��

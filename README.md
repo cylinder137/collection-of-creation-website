@@ -21,7 +21,11 @@
 #### 开发规范（重要！全员必读）
 1. **前后端开发日志只增不删**：每次改动代码后，必须在对应目录的 `DEVLOG.md`（front_end/DEVLOG.md 或 back_end/DEVLOG.md）追加本次改动记录（时间、改动内容、提交人）
 2. **每次改动必须跟进**：改代码 → 更新 DEVLOG → git 提交 → 推送远程
-3. **禁止直接推送 master**：每人从 master 拉取后创建自己的 feature 分支（如 `feature/xxx`），开发完成后提交 Pull Request / 合并请求，由负责人 review 后合并
+3. **采用 GitHub Flow 分支策略**：
+   - 每次开发任务从 `main` 新建分支：`feature/xxx`（如 `feature/login-page`）
+   - 开发完成 → 提交 Pull Request → 负责人 review 通过后合并进 `main`
+   - **合并后当场删除该 feature 分支**（本地 + 远程），不留残留分支
+   - 下次开发任务再新建新分支，禁止长期复用/堆积分支
 4. 项目路径保持纯英文，避免中文目录导致的工具链问题
 
 #### 安装教程
