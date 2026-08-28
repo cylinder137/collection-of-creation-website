@@ -71,7 +71,8 @@ for (let i = 0; i < argv.length; i++) {
 // ---------- 子进程工具 ----------
 function run(cmd, args, label) {
   return new Promise((resolve, reject) => {
-    const child = spawn(cmd, args, { cwd: root, stdio: 'inherit', shell: false })
+    // Windows 上 .cmd/.bat 需要 shell 解释执行，否则 spawn 抛 EINVAL
+    const child = spawn(cmd, args, { cwd: root, stdio: 'inherit', shell: cmd.endsWith('.cmd') })
     child.on('error', (e) => reject(new Error(`${label} 启动失败：${e.message}`)))
     child.on('close', (code) =>
       code === 0 ? resolve() : reject(new Error(`${label} 退出码 ${code}`))
@@ -87,8 +88,8 @@ log(`项目目录：${color.gray(root)}`)
 
 // 1. 依赖检查：node_modules 缺失则自动安装
 if (!existsSync(path.join(root, 'node_modules'))) {
-  warn('未检测到 node_modules，先执行 npm install …')
-  await run(npmCmd, ['install'], 'npm install')
+  warn('未检测到 node_modules，先执行 npm install（含 devDependencies，预览必需）')
+  await run(npmCmd, ['install', '--include=dev'], 'npm install')
   ok('依赖安装完成')
 }
 
