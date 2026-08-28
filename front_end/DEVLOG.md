@@ -1,27 +1,27 @@
-# front_end 开发日志
+# front_end 开发日�?
 
-> ⚠️ 规则：**只增不删**。每次前端改动后，在下方追加记录（时间 / 改动内容 / 提交人），并同步 git 提交推送。
+> ⚠️ 规则�?**只增不删**。每次前端改动后，在下方追加记录（时�? / 改动内容 / 提交人），并同步 git 提交推送�?
 
-## 2026-08-27 13:55 ｜ 初始化
-- 创建 front_end 目录与开发日志（提交人：cylinder137 / Tinker）
-- 待办：使用 `npm create vue`（Vite）初始化项目脚手架
+## 2026-08-27 13:55 �? 初始�?
+- 创建 front_end 目录与开发日志（提交人：cylinder137 / Tinker�?
+- 待办：使�? `npm create vue`（Vite）初始化项目脚手�?
 
-## 2026-08-27 14:40 ｜ 迁移 GitHub
-- 仓库迁移至 GitHub：collection-of-creation-website（提交人：cylinder137 / Tinker）
+## 2026-08-27 14:40 �? 迁移 GitHub
+- 仓库迁移�? GitHub：collection-of-creation-website（提交人：cylinder137 / Tinker�?
 
-## 2026-08-27 14:52 ｜ 入驻日志复核
-- 复核开发者入驻日志，确认本机环境：Node v22.22.2 / npm 10.9.7，可初始化前端脚手架（提交人：Claw 助手 / WorkBuddy）
+## 2026-08-27 14:52 �? 入驻日志复核
+- 复核开发者入驻日志，确认本机环境：Node v22.22.2 / npm 10.9.7，可初始化前端脚手架（提交人：Claw 助手 / WorkBuddy�?
 
-## 2026-08-27 14:55 ｜ 开发者入驻
-- 开发者入驻项目，完成仓库克隆与环境确认（提交人：OpenClaw 助手 / cylinder137 授权）
-- 待办：使用 `npm create vue`（Vite）初始化项目脚手架
+## 2026-08-27 14:55 �? 开发者入�?
+- 开发者入驻项目，完成仓库克隆与环境确认（提交人：OpenClaw 助手 / cylinder137 授权�?
+- 待办：使�? `npm create vue`（Vite）初始化项目脚手�?
 
-## 2026-08-27 15:10 ｜ 前端脚手架初始化
-- 使用 Vite 搭建 Vue3 + TypeScript 脚手架：package.json / vite.config.ts / tsconfig / index.html（提交人：Claw 助手 / WorkBuddy）
-- 集成 Element Plus（中文语言包 + 全量图标）、Vue Router（hash 模式）、Pinia、Axios（`/api` 开发代理到后端 8080）
-- 基础页面：首页 / 产品中心 / 购买 / 激活码 / 管理后台，通用组件 ProductCard，类型定义与接口层齐备
-- `npm run type-check` 与 `npm run build` 均通过
-- 待办：后端接口联调、微信支付对接、管理后台鉴权
+## 2026-08-27 15:10 �? 前端脚手架初始化
+- 使用 Vite 搭建 Vue3 + TypeScript 脚手架：package.json / vite.config.ts / tsconfig / index.html（提交人：Claw 助手 / WorkBuddy�?
+- 集成 Element Plus（中文语言�? + 全量图标）、Vue Router（hash 模式）、Pinia、Axios（`/api` 开发代理到后端 8080�?
+- 基础页面：首�? / 产品中心 / 购买 / 激活码 / 管理后台，通用组件 ProductCard，类型定义与接口层齐�?
+- `npm run type-check` �? `npm run build` 均通过
+- 待办：后端接口联调、微信支付对接、管理后台鉴�?
 - 备注：Element Plus 全量引入致主包约 1.16 MB（gzip 367 KB），后续可按需引入优化
 
 ## 2026-08-28 08:52 �� ��֧���Ը��£�GitHub Flow��
@@ -32,4 +32,11 @@
 - ���� `scripts/preview.mjs`�������� Node �ű���������ģʽһ��Ԥ����ȱ�����Զ� `npm install`��Vite dev server �Զ������������`--build` ���ȹ�����Ԥ�����֧�� `--port` / `--host` / `--no-open`���ύ�ˣ����� / WorkBuddy��
 - `package.json` ������� `npm run preview:quick`
 - �ѱ�����֤ `--help` �����У���߼�����Ӧ README�����ٿ�ʼ��ͬ�������÷�
+
+## 2026-08-28 13:55 �� ǰ�˷����Ż���JS ��Ⱦ����
+- ���� `src/api/sign.ts`������ǩ����X-Timestamp/X-Nonce/X-Sign��cyrb53 ��ʾ����ϣ��+ ��Ӧ�غ� XOR+Base64 ���루�ύ�ˣ����� / WorkBuddy��
+- `src/api/http.ts`�������������Զ���ǩ��ͷ����Ӧ������֧�� `{payload}` ���������Զ�����
+- ���� `src/utils/antiCrawler.ts`��webdriver/��ͷ UA/ָ����ϼ�⣬�����������м��ܾ����أ�`main.ts` ����ǰ����
+- `vite.config.ts`�����������޳� console.log/debug �� debugger ���
+- �����ϵ㣨�� README��������ơ�����У��ǩ����ʱ������طš����нӿڿɷ��ر��� payload����������
 

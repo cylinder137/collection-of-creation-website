@@ -25,4 +25,9 @@ export default defineConfig({
     outDir: 'dist',
     sourcemap: false,
   },
+  // 反爬/加固：生产构建剔除调试痕迹（console.log/debug、debugger 语句）
+  esbuild: {
+    pure: ['console.log', 'console.debug'],
+    drop: ['debugger'],
+  },
 })
