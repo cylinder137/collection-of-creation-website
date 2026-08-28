@@ -26,3 +26,10 @@
 
 ## 2026-08-28 08:52 ｜ 分支策略更新（GitHub Flow）
 - 项目规范更新：每次开发从 main 新建 feature/xxx，合并后当场删分支（提交人：Claw 助手 / cylinder137 授权）
+
+
+## 2026-08-28 09:50 ｜ 新增页面快捷预览脚本
+- 新增 `scripts/preview.mjs`（零依赖 Node 脚本）：开发模式一键预览（缺依赖自动 `npm install`、Vite dev server 自动开浏览器），`--build` 可先构建再预览产物，支持 `--port` / `--host` / `--no-open`（提交人：大林 / WorkBuddy）
+- `package.json` 新增入口 `npm run preview:quick`
+- 已本地验证 `--help` 与参数校验逻辑；对应 README「快速开始」同步补充用法
+
