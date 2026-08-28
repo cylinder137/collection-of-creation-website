@@ -27,3 +27,8 @@
 
 ## 2026-08-28 08:52 �� ��֧���Ը��£�GitHub Flow��
 - ��Ŀ�淶���£�ÿ�ο����� main �½� feature/xxx���ϲ��󵱳�ɾ��֧���ύ�ˣ�Claw ���� / cylinder137 ��Ȩ��
+
+## 2026-08-28 11:30 ｜ 数据库结构安全加固（v2）+ Flyway 版本化（提交人：cylinder137 / Tinker）
+- 安全审查后优化 schema.sql：① payment.order_no 加 UNIQUE（防微信重复回调）② 金额/状态加 CHECK 约束 ③ machine_code 改为只存 SHA-256 哈希（64 字符，不存明文硬件指纹）④ user.phone 与 payment.notify_raw 改为加密存储（个保法合规）⑤ 删除 device.status 冗余字段（激活状态以 license 表为准）⑥ 排序规则升级 utf8mb4_0900_ai_ci ⑦ license 新增 license_type（永久/订阅）⑧ 新增 idx_orders_status 索引
+- 新增 Flyway 版本化迁移：back_end/src/main/resources/db/migration/V1__init.sql（Spring Boot 启动自动建表，后续变更新增 V2__xxx.sql，禁止修改已执行脚本）
+- 待办：pom.xml 需引入 flyway-core + flyway-mysql 依赖；生成 MyBatis 实体/Mapper；编写产品/订单/激活码业务接口（提交人：小麦能磨面 / MaiMai11185）

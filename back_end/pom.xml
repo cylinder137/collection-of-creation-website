@@ -50,6 +50,16 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- Flyway 数据库版本化迁移（启动自动执行 db/migration/V*.sql） -->
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-mysql</artifactId>
+        </dependency>
+
         <!-- 测试 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

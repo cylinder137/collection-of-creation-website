@@ -1,31 +1,14 @@
 -- ============================================================
--- 造物集官网（大连造物集有限公司）数据库初始化脚本（v2 安全加固版）
+-- 造物集官网（大连造物集有限公司）数据库迁移脚本 V1
+-- Flyway 版本化迁移：Spring Boot 启动时自动执行（仅执行一次）
 -- 数据库：zaowuji   字符集：utf8mb4   引擎：InnoDB   适用：MySQL 8.0.16+
--- 说明：本脚本为「全量手动建库」参考；项目实际迁移请走 Flyway：
---       back_end/src/main/resources/db/migration/V1__init.sql（Spring Boot 启动自动执行）
--- 约定：
---   1. 金额一律用 INT，单位「分」（微信支付单位就是分，避免浮点误差）
---   2. 状态字段用 TINYINT + CHECK 约束 + 注释枚举
---   3. 主键 BIGINT 自增，统一 created_at / updated_at
---   4. 表名 order 为 MySQL 保留字，故订单表命名为 orders
---   5. 敏感字段（手机号、支付回调原文）加密存储；机器码只存 SHA-256 哈希，不存明文硬件指纹
---   6. 支付回调必须幂等：payment.order_no 唯一约束 + 应用层校验 payment.amount == orders.amount
--- 执行方式：mysql -u root -p < schema.sql
+-- 与 back_end/sql/schema.sql（全量手动版）保持一致；后续变更请新增 V2__xxx.sql，
+-- 禁止修改已执行的迁移脚本。
 -- ============================================================
-
-CREATE DATABASE IF NOT EXISTS `zaowuji`
-  DEFAULT CHARACTER SET utf8mb4
-  DEFAULT COLLATE utf8mb4_0900_ai_ci;
-
-USE `zaowuji`;
-
-SET NAMES utf8mb4;
-SET FOREIGN_KEY_CHECKS = 0;
 
 -- ============================================================
 -- 1. 产品表 product
 -- ============================================================
-DROP TABLE IF EXISTS `product`;
 CREATE TABLE `product` (
   `id`          BIGINT       NOT NULL AUTO_INCREMENT COMMENT '主键',
   `name`        VARCHAR(100) NOT NULL                COMMENT '产品名称',
@@ -47,7 +30,6 @@ CREATE TABLE `product` (
 -- ============================================================
 -- 2. 买家用户表 user（user 为 MySQL 保留字，访问时需用反引号）
 -- ============================================================
-DROP TABLE IF EXISTS `user`;
 CREATE TABLE `user` (
   `id`         BIGINT       NOT NULL AUTO_INCREMENT COMMENT '主键',
   `openid`     VARCHAR(64)  NOT NULL                COMMENT '微信 openid',
@@ -64,7 +46,6 @@ CREATE TABLE `user` (
 -- ============================================================
 -- 3. 后台管理员表 admin_user
 -- ============================================================
-DROP TABLE IF EXISTS `admin_user`;
 CREATE TABLE `admin_user` (
   `id`            BIGINT       NOT NULL AUTO_INCREMENT COMMENT '主键',
   `username`      VARCHAR(50)  NOT NULL                COMMENT '登录名',
@@ -84,7 +65,6 @@ CREATE TABLE `admin_user` (
 -- ============================================================
 -- 4. 订单表 orders
 -- ============================================================
-DROP TABLE IF EXISTS `orders`;
 CREATE TABLE `orders` (
   `id`             BIGINT       NOT NULL AUTO_INCREMENT COMMENT '主键',
   `order_no`       VARCHAR(32)  NOT NULL                COMMENT '订单号（业务唯一）',
@@ -115,7 +95,6 @@ CREATE TABLE `orders` (
 --    不存明文硬件指纹；比对时对客户端提交的机器码做同样哈希后匹配。
 --    激活状态一律以 license 表为准，本表不冗余状态字段。
 -- ============================================================
-DROP TABLE IF EXISTS `device`;
 CREATE TABLE `device` (
   `id`           BIGINT       NOT NULL AUTO_INCREMENT COMMENT '主键',
   `machine_code` VARCHAR(64)  NOT NULL                COMMENT '机器码 SHA-256 哈希（hex，64 字符）',
@@ -141,7 +120,6 @@ CREATE TABLE `device` (
 --      严禁只按"激活码存在"放行
 --    - machine_code 只存 SHA-256 哈希
 -- ============================================================
-DROP TABLE IF EXISTS `license`;
 CREATE TABLE `license` (
   `id`           BIGINT       NOT NULL AUTO_INCREMENT COMMENT '主键',
   `license_key`  VARCHAR(512) NOT NULL                COMMENT '激活码内容（payload），RSA-2048 签名场景建议 <= 512 字符',
@@ -179,7 +157,6 @@ CREATE TABLE `license` (
 --    - 应用层必须校验 payment.amount == orders.amount（防金额篡改）
 --    - notify_raw 含 openid 等个人信息，必须 AES 加密后存储
 -- ============================================================
-DROP TABLE IF EXISTS `payment`;
 CREATE TABLE `payment` (
   `id`             BIGINT      NOT NULL AUTO_INCREMENT COMMENT '主键',
   `order_id`       BIGINT      NOT NULL                COMMENT '订单',
@@ -201,7 +178,6 @@ CREATE TABLE `payment` (
 -- ============================================================
 -- 8. 操作日志表 operation_log
 -- ============================================================
-DROP TABLE IF EXISTS `operation_log`;
 CREATE TABLE `operation_log` (
   `id`         BIGINT       NOT NULL AUTO_INCREMENT COMMENT '主键',
   `admin_id`   BIGINT       DEFAULT NULL            COMMENT '操作管理员',
@@ -213,8 +189,6 @@ CREATE TABLE `operation_log` (
   KEY `idx_optlog_admin` (`admin_id`),
   CONSTRAINT `fk_optlog_admin` FOREIGN KEY (`admin_id`) REFERENCES `admin_user` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='操作日志表';
-
-SET FOREIGN_KEY_CHECKS = 1;
 
 -- ============================================================
 -- 初始数据（种子数据）
