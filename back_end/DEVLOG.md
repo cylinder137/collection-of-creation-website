@@ -18,3 +18,9 @@
 - 分支：`feature/backend-scaffold`，按团队规范走 PR 合并，不直推 main
 - 待办：设计业务表结构（产品 / 订单 / 激活码表），编写 Mapper / Service / Controller 业务代码
 
+## 2026-08-28 10:24 ｜ 数据库表结构设计
+- 设计数据库 8 张表：`product`（产品）、`user`（买家）、`orders`（订单）、`device`（机器码登记）、`license`（激活码）、`admin_user`（管理员）+ 辅助表 `payment`（支付流水）、`operation_log`（操作日志）
+- 生成建表脚本 `back_end/sql/schema.sql`：utf8mb4 + InnoDB，金额统一用分（INT），含索引与外键约束，附 coBrain 产品种子数据
+- 关键约定：订单表命名 `orders` 避开 MySQL 保留字；激活码表存 RSA 签名 `sign` + 绑定机器码 `machine_code`
+- 待办：生成 MyBatis 实体类/Mapper，编写产品 / 订单 / 激活码业务接口（提交人：小麦能磨面 / MaiMai11185）
+
