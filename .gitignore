@@ -30,3 +30,6 @@ Thumbs.db
 application-local.yml
 .env
 .env.local
+
+# RSA 激活码私钥（严禁提交）
+tools/license_tool/keys/
