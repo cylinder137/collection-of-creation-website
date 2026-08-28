@@ -24,7 +24,12 @@
 - 待办：后端接口联调、微信支付对接、管理后台鉴权
 - 备注：Element Plus 全量引入致主包约 1.16 MB（gzip 367 KB），后续可按需引入优化
 
-## 2026-08-28 09:50 ｜ 新增页面快捷预览脚本
-- 新增 `scripts/preview.mjs`（零依赖 Node 脚本）：开发模式一键预览（缺依赖自动 `npm install`、Vite dev server 自动开浏览器），`--build` 可先构建再预览产物，支持 `--port` / `--host` / `--no-open`（提交人：大林 / WorkBuddy）
-- `package.json` 新增入口 `npm run preview:quick`
-- 已本地验证 `--help` 与参数校验逻辑；对应 README「快速开始」同步补充用法
+## 2026-08-28 08:52 �� ��֧���Ը��£�GitHub Flow��
+- ��Ŀ�淶���£�ÿ�ο����� main �½� feature/xxx���ϲ��󵱳�ɾ��֧���ύ�ˣ�Claw ���� / cylinder137 ��Ȩ��
+
+
+## 2026-08-28 09:50 �� ����ҳ����Ԥ���ű�
+- ���� `scripts/preview.mjs`�������� Node �ű���������ģʽһ��Ԥ����ȱ�����Զ� `npm install`��Vite dev server �Զ������������`--build` ���ȹ�����Ԥ�����֧�� `--port` / `--host` / `--no-open`���ύ�ˣ����� / WorkBuddy��
+- `package.json` ������� `npm run preview:quick`
+- �ѱ�����֤ `--help` �����У���߼�����Ӧ README�����ٿ�ʼ��ͬ�������÷�
+
