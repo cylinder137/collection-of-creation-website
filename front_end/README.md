@@ -21,6 +21,13 @@ npm run preview    # 本地预览构建产物
 npm run type-check # 类型检查
 ```
 
+一键快捷预览（缺依赖自动安装、自动开浏览器，支持 `--build` / `--port` / `--host`）：
+
+```bash
+npm run preview:quick            # 开发模式预览
+npm run preview:quick -- --build # 构建后预览产物
+```
+
 ## 目录结构
 
 ```
