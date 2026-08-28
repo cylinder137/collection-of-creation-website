@@ -33,3 +33,7 @@ application-local.yml
 
 # RSA 激活码私钥（严禁提交）
 tools/license_tool/keys/
+
+# Python
+__pycache__/
+*.pyc
