@@ -1,0 +1,26 @@
+package com.zaowuji.back.entity;
+
+import lombok.Data;
+
+import java.time.LocalDateTime;
+
+/**
+ * 产品表
+ */
+@Data
+public class Product {
+    private Long id;
+    private String name;
+    private String code;
+    private String description;
+    /** 价格（分） */
+    private Integer price;
+    private String version;
+    private String coverUrl;
+    /** 1上架 0下架 */
+    private Integer status;
+    /** 排序权重，越小越靠前 */
+    private Integer sort;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+}
