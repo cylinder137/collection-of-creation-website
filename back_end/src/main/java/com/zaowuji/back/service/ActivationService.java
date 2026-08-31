@@ -3,9 +3,11 @@ package com.zaowuji.back.service;
 import com.zaowuji.back.common.BizException;
 import com.zaowuji.back.entity.Device;
 import com.zaowuji.back.entity.License;
+import com.zaowuji.back.entity.Orders;
 import com.zaowuji.back.entity.Product;
 import com.zaowuji.back.mapper.DeviceMapper;
 import com.zaowuji.back.mapper.LicenseMapper;
+import com.zaowuji.back.mapper.OrdersMapper;
 import com.zaowuji.back.util.SecurityUtils;
 import com.zaowuji.back.vo.ActivationCodeVO;
 import org.springframework.stereotype.Service;
@@ -28,20 +30,25 @@ public class ActivationService {
 
     private final LicenseMapper licenseMapper;
     private final DeviceMapper deviceMapper;
+    private final OrdersMapper ordersMapper;
     private final ProductService productService;
 
-    public ActivationService(LicenseMapper licenseMapper, DeviceMapper deviceMapper, ProductService productService) {
+    public ActivationService(LicenseMapper licenseMapper, DeviceMapper deviceMapper,
+                             OrdersMapper ordersMapper, ProductService productService) {
         this.licenseMapper = licenseMapper;
         this.deviceMapper = deviceMapper;
+        this.ordersMapper = ordersMapper;
         this.productService = productService;
     }
 
     /**
      * 提交机器码，申请签发激活码
      * 已存在则直接返回（幂等）
+     *
+     * @param orderNo 可选：下单后激活时携带，服务端校验订单并绑定到激活码
      */
     @Transactional
-    public ActivationCodeVO activate(Long productId, String machineCode) {
+    public ActivationCodeVO activate(Long productId, String machineCode, String orderNo) {
         Product product = productService.getById(productId);
         String hash = SecurityUtils.sha256Hex(machineCode);
 
@@ -49,6 +56,22 @@ public class ActivationService {
         License existing = licenseMapper.selectByLicenseKey(hash + "-" + productId);
         if (existing != null) {
             return toVO(existing, product, machineCode);
+        }
+
+        // 可选订单校验：订单存在、未取消、产品匹配，激活码绑定该订单
+        Long orderId = null;
+        if (orderNo != null && !orderNo.isBlank()) {
+            Orders order = ordersMapper.selectByOrderNo(orderNo);
+            if (order == null) {
+                throw new BizException("订单不存在：" + orderNo);
+            }
+            if (order.getStatus() != null && order.getStatus() == 2) {
+                throw new BizException("订单已取消，无法签发激活码");
+            }
+            if (!order.getProductId().equals(productId)) {
+                throw new BizException("订单与所选产品不匹配");
+            }
+            orderId = order.getId();
         }
 
         // 登记设备（幂等）
@@ -65,6 +88,7 @@ public class ActivationService {
         license.setLicenseKey(hash + "-" + productId);
         license.setMachineCode(hash);
         license.setProductId(productId);
+        license.setOrderId(orderId);
         license.setDeviceId(device.getId());
         license.setSign("RSA_PENDING_" + UUID.randomUUID()); // TODO: 接入 RSA 私钥签发
         license.setLicenseType(1); // 永久

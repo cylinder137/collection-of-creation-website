@@ -11,7 +11,7 @@ const store = useAppStore()
 
 const features = [
   { icon: 'Key', title: '激活码秒发', desc: '购买后系统自动签发激活码，绑定机器码，安全可靠' },
-  { icon: 'Wallet', title: '微信支付', desc: '官方收款，订单状态实时可查（支付接口申请中）' },
+  { icon: 'Wallet', title: '微信支付', desc: '官方收款，订单状态实时可查' },
   { icon: 'Monitor', title: '跨平台支持', desc: 'Windows / macOS 全平台适用' },
 ]
 
@@ -25,24 +25,20 @@ onMounted(async () => {
       {
         id: 1,
         name: 'coBrain',
-        code: 'coBrain',
-        description: '面向团队协作的白板笔记编辑器，支持多端同步与手写识别。',
-        version: '1.0.0',
-        coverUrl: null,
-        price: 199,
-        status: 1,
-        sort: 1,
+        slogan: '白板笔记编辑器',
+        description: '思维可视化与知识整理的一体化白板笔记工具。',
+        price: 99,
+        platforms: ['Windows', 'macOS'],
+        tags: ['效率', '笔记'],
       },
       {
         id: 2,
         name: 'coBrain Pro',
-        code: 'coBrainPro',
+        slogan: '白板笔记 · 专业版',
         description: '在标准版基础上提供云端同步、多人协作与更多模板。',
-        version: '1.0.0',
-        coverUrl: null,
-        price: 299,
-        status: 1,
-        sort: 2,
+        price: 199,
+        platforms: ['Windows', 'macOS'],
+        tags: ['效率', '协作'],
       },
     ])
   }

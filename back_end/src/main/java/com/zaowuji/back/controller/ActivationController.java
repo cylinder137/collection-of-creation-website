@@ -27,10 +27,11 @@ public class ActivationController {
         this.activationService = activationService;
     }
 
-    /** 提交机器码，申请签发激活码 */
+    /** 提交机器码，申请签发激活码（可选携带订单号，服务端校验并绑定） */
     @PostMapping
     public ApiResponse<ActivationCodeVO> activate(@Valid @RequestBody ActivateParams params) {
-        return ApiResponse.ok(activationService.activate(params.getProductId(), params.getMachineCode()));
+        return ApiResponse.ok(activationService.activate(
+                params.getProductId(), params.getMachineCode(), params.getOrderNo()));
     }
 
     /** 查询激活记录（按机器码） */

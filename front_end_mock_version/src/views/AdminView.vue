@@ -22,8 +22,8 @@ async function loadOrders() {
         orderNo: 'D202608270001',
         productId: 1,
         productName: 'coBrain',
-        amount: 199,
-        status: 1,
+        amount: 99,
+        status: 'PAID',
         createdAt: '2026-08-27 14:00:00',
       },
     ]
@@ -34,20 +34,10 @@ async function loadOrders() {
 
 onMounted(loadOrders)
 
-/** 订单状态：0待支付 1已支付 2已取消 3已退款 4已签发 */
-function statusOf(status: number) {
-  switch (status) {
-    case 1:
-      return { type: 'success' as const, text: '已支付' }
-    case 2:
-      return { type: 'info' as const, text: '已取消' }
-    case 3:
-      return { type: 'warning' as const, text: '已退款' }
-    case 4:
-      return { type: 'primary' as const, text: '已签发' }
-    default:
-      return { type: 'warning' as const, text: '待支付' }
-  }
+const statusMap: Record<Order['status'], { text: string; type: 'warning' | 'success' | 'info' }> = {
+  PENDING: { text: '待支付', type: 'warning' },
+  PAID: { text: '已支付', type: 'success' },
+  CANCELLED: { text: '已取消', type: 'info' },
 }
 </script>
 
@@ -67,7 +57,7 @@ function statusOf(status: number) {
             </el-table-column>
             <el-table-column label="状态" width="100">
               <template #default="{ row }">
-                <el-tag :type="statusOf(row.status).type">{{ statusOf(row.status).text }}</el-tag>
+                <el-tag :type="statusMap[row.status].type">{{ statusMap[row.status].text }}</el-tag>
               </template>
             </el-table-column>
             <el-table-column prop="createdAt" label="下单时间" width="170" />

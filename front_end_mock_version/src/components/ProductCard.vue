@@ -7,14 +7,18 @@ defineEmits<{ buy: [] }>()
 
 <template>
   <el-card shadow="hover" class="product-card">
-    <div class="cover">
-      <img v-if="product.coverUrl" :src="product.coverUrl" alt="cover" class="cover-img" />
-      <el-icon v-else :size="40" color="#fff"><Box /></el-icon>
+    <div class="cover" :style="{ background: `linear-gradient(135deg, #4f6ef7, #7c5cf7)` }">
+      <el-icon :size="40" color="#fff"><Box /></el-icon>
     </div>
     <div class="body">
       <h3 class="name">{{ product.name }}</h3>
-      <p class="version">v{{ product.version ?? '—' }} · {{ product.code }}</p>
+      <p class="slogan">{{ product.slogan }}</p>
       <p class="desc">{{ product.description }}</p>
+      <div class="tags">
+        <el-tag v-for="t in product.tags ?? []" :key="t" size="small" type="primary" effect="plain">
+          {{ t }}
+        </el-tag>
+      </div>
       <div class="footer">
         <span class="price">
           <span class="symbol">¥</span>{{ product.price }}
@@ -37,14 +41,6 @@ defineEmits<{ buy: [] }>()
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #4f6ef7, #7c5cf7);
-  overflow: hidden;
-}
-
-.cover-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
 }
 
 .body {
@@ -56,7 +52,7 @@ defineEmits<{ buy: [] }>()
   font-weight: 600;
 }
 
-.version {
+.slogan {
   color: var(--brand-color);
   font-size: 13px;
   margin: 4px 0 8px;
@@ -69,11 +65,16 @@ defineEmits<{ buy: [] }>()
   min-height: 44px;
 }
 
+.tags {
+  margin: 10px 0 14px;
+  display: flex;
+  gap: 6px;
+}
+
 .footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 10px;
 }
 
 .price {

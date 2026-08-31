@@ -16,27 +16,33 @@ const product = computed(
 )
 
 const form = reactive({
+  contact: '',
   remark: '',
 })
+
+const rules = {
+  contact: [{ required: true, message: '请填写手机号或邮箱', trigger: 'blur' }],
+}
 
 const formRef = ref()
 
 async function submit() {
   if (!product.value) return
+  await formRef.value.validate()
   submitting.value = true
   try {
     const order = await orderApi.create({
       productId: product.value.id,
-      // 不再收集手机号/邮箱：激活码直接在网页上签发，无需短信/邮件
+      contact: form.contact,
       remark: form.remark,
     })
     ElMessage.success(`订单创建成功：${order.orderNo}`)
-    // 记录最近订单号，激活页自动带上以便后端校验并绑定
-    sessionStorage.setItem('zwj_last_order_no', order.orderNo)
-    // TODO: 对接微信支付（企业收款，支付接口申请中），支付成功后跳转激活
+    // TODO: 对接微信支付（企业收款），跳转支付
     router.push('/activation')
-  } catch (e: any) {
-    ElMessage.error(e?.message || '订单创建失败')
+  } catch {
+    // 后端未就绪时的演示流程
+    ElMessage.success('（演示）订单创建成功，待后端联调微信支付')
+    router.push('/activation')
   } finally {
     submitting.value = false
   }
@@ -53,7 +59,7 @@ async function submit() {
       <el-col :xs="24" :md="12">
         <el-card shadow="never">
           <h2 class="product-name">{{ product.name }}</h2>
-          <p class="product-version">v{{ product.version ?? '1.0' }} · {{ product.code }}</p>
+          <p class="product-slogan">{{ product.slogan }}</p>
           <p class="product-desc">{{ product.description }}</p>
           <el-divider />
           <p class="product-price">
@@ -61,15 +67,22 @@ async function submit() {
             <span class="price-num">{{ product.price }}</span>
             <span class="price-unit">/ 永久授权</span>
           </p>
+          <p class="product-meta">
+            <el-tag v-for="t in product.tags" :key="t" size="small" class="tag">{{ t }}</el-tag>
+            <span class="platform">支持平台：{{ (product.platforms ?? []).join(' / ') }}</span>
+          </p>
         </el-card>
       </el-col>
 
       <el-col :xs="24" :md="12">
         <el-card shadow="never">
-          <template #header>提交订单</template>
-          <el-form ref="formRef" :model="form" label-width="90px">
+          <template #header>填写订单信息</template>
+          <el-form ref="formRef" :model="form" :rules="rules" label-width="90px">
             <el-form-item label="产品" prop="productId">
               <el-input :model-value="product.name" disabled />
+            </el-form-item>
+            <el-form-item label="联系方式" prop="contact">
+              <el-input v-model="form.contact" placeholder="手机号或邮箱，用于接收激活码" />
             </el-form-item>
             <el-form-item label="备注" prop="remark">
               <el-input v-model="form.remark" type="textarea" :rows="3" placeholder="选填" />
@@ -78,7 +91,7 @@ async function submit() {
               <el-button type="primary" size="large" :loading="submitting" @click="submit">
                 提交订单
               </el-button>
-              <span class="form-tip">提交后前往激活页自动获取机器码并签发激活码</span>
+              <span class="form-tip">支付成功后系统将自动签发激活码</span>
             </el-form-item>
           </el-form>
         </el-card>
@@ -97,7 +110,7 @@ async function submit() {
   font-weight: 600;
 }
 
-.product-version {
+.product-slogan {
   color: var(--brand-color);
   margin: 6px 0 12px;
 }
@@ -125,6 +138,18 @@ async function submit() {
 .price-unit {
   color: var(--text-secondary);
   font-size: 13px;
+}
+
+.product-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.platform {
+  color: var(--text-secondary);
+  font-size: 13px;
+  margin-left: 8px;
 }
 
 .form-tip {

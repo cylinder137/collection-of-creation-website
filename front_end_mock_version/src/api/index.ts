@@ -9,7 +9,7 @@ import type {
 
 /** 产品 */
 export const productApi = {
-  /** 获取全部上架产品 */
+  /** 获取全部产品 */
   list() {
     return request<Product[]>({ url: '/products', method: 'get' })
   },
@@ -21,7 +21,7 @@ export const productApi = {
 
 /** 订单 */
 export const orderApi = {
-  /** 创建订单（微信支付待接入） */
+  /** 创建订单（微信支付） */
   create(data: CreateOrderParams) {
     return request<Order>({ url: '/orders', method: 'post', data })
   },
@@ -37,12 +37,8 @@ export const activationApi = {
   activate(data: ActivateParams) {
     return request<ActivationCode>({ url: '/activations', method: 'post', data })
   },
-  /** 查询激活记录（按机器码） */
-  list(machineCode: string) {
-    return request<ActivationCode[]>({
-      url: '/activations',
-      method: 'get',
-      params: { machineCode },
-    })
+  /** 查询激活记录 */
+  list() {
+    return request<ActivationCode[]>({ url: '/activations', method: 'get' })
   },
 }

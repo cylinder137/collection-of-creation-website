@@ -50,12 +50,13 @@ public class OrderService {
             throw new BizException("产品已下架");
         }
 
-        // 按联系方式找/建用户（openid 暂用 contact 的 SHA-256 前缀占位，后续接微信登录替换）
-        User user = userMapper.selectByOpenid("contact_" + contact);
+        // 联系方式可选：空则用 anonymous 兜底（openid 暂用 contact 的 SHA-256 前缀占位，后续接微信登录替换）
+        String effectiveContact = (contact == null || contact.isBlank()) ? "anonymous" : contact;
+        User user = userMapper.selectByOpenid("contact_" + effectiveContact);
         if (user == null) {
             user = new User();
-            user.setOpenid("contact_" + contact);
-            user.setNickname(contact);
+            user.setOpenid("contact_" + effectiveContact);
+            user.setNickname(effectiveContact);
             userMapper.insert(user);
         }
 

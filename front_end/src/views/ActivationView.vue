@@ -3,47 +3,66 @@ import { onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useAppStore } from '@/stores'
 import { activationApi } from '@/api'
+import { getMachineCode } from '@/utils/device'
 import type { ActivationCode } from '@/types'
 
 const store = useAppStore()
 const records = ref<ActivationCode[]>([])
 const activating = ref(false)
+const machineCode = ref('')
 
 const form = reactive({
   productId: 1,
-  machineCode: '',
+  // 机器码由前端自动获取，无需用户填写
+  orderNo: sessionStorage.getItem('zwj_last_order_no') ?? '',
 })
-
-const rules = {
-  machineCode: [{ required: true, message: '请填写机器码', trigger: 'blur' }],
-}
 
 const formRef = ref()
 
 async function loadRecords() {
+  if (!machineCode.value) return
   try {
-    records.value = await activationApi.list()
+    records.value = await activationApi.list(machineCode.value)
   } catch {
     records.value = []
   }
 }
 
-onMounted(loadRecords)
+onMounted(async () => {
+  // 自动获取本机机器码（设备指纹）
+  machineCode.value = await getMachineCode()
+  await loadRecords()
+})
 
 async function activate() {
-  await formRef.value.validate()
+  if (!machineCode.value) return
   activating.value = true
   try {
     const code = await activationApi.activate({
       productId: form.productId,
-      machineCode: form.machineCode,
+      machineCode: machineCode.value,
+      orderNo: form.orderNo || undefined,
     })
     ElMessage.success(`激活码签发成功：${code.code}`)
     await loadRecords()
-  } catch {
-    ElMessage.warning('（演示）后端未就绪，激活码流程待联调')
+  } catch (e: any) {
+    ElMessage.error(e?.message || '激活码签发失败')
   } finally {
     activating.value = false
+  }
+}
+
+/** 状态展示：0未激活 1已激活 2已吊销 3已过期 */
+function statusOf(row: ActivationCode) {
+  switch (row.status) {
+    case 1:
+      return { type: 'success' as const, text: '已激活' }
+    case 2:
+      return { type: 'danger' as const, text: '已吊销' }
+    case 3:
+      return { type: 'info' as const, text: '已过期' }
+    default:
+      return { type: 'warning' as const, text: '未激活' }
   }
 }
 </script>
@@ -51,10 +70,10 @@ async function activate() {
 <template>
   <div class="page-container">
     <h2 class="section-title">激活码</h2>
-    <p class="section-subtitle">提交机器码，获取对应产品的激活码</p>
+    <p class="section-subtitle">点击按钮自动获取本机机器码并申请激活码</p>
 
     <el-card shadow="never" class="mb">
-      <el-form ref="formRef" :model="form" :rules="rules" label-width="90px">
+      <el-form ref="formRef" :model="form" label-width="90px">
         <el-form-item label="产品" prop="productId">
           <el-select v-model="form.productId" placeholder="选择产品">
             <el-option
@@ -65,28 +84,31 @@ async function activate() {
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="机器码" prop="machineCode">
-          <el-input v-model="form.machineCode" placeholder="请从软件客户端复制机器码" />
+        <el-form-item label="本机机器码">
+          <el-input :model-value="machineCode" readonly>
+            <template #append>
+              <el-button :loading="activating" type="primary" @click="activate">
+                生成激活码
+              </el-button>
+            </template>
+          </el-input>
+          <div class="field-tip">机器码由系统自动获取（设备指纹），无需手动填写</div>
         </el-form-item>
-        <el-form-item>
-          <el-button type="primary" :loading="activating" @click="activate">
-            生成激活码
-          </el-button>
+        <el-form-item v-if="form.orderNo" label="关联订单">
+          <el-input :model-value="form.orderNo" readonly />
         </el-form-item>
       </el-form>
     </el-card>
 
     <el-card shadow="never">
       <template #header>激活记录</template>
-      <el-table :data="records" empty-text="暂无记录">
+      <el-table :data="records" empty-text="暂无激活记录">
         <el-table-column prop="code" label="激活码" min-width="180" />
         <el-table-column prop="productName" label="产品" min-width="120" />
         <el-table-column prop="machineCode" label="机器码" min-width="160" />
         <el-table-column label="状态" width="100">
           <template #default="{ row }">
-            <el-tag :type="row.status === 'ACTIVATED' ? 'success' : 'info'">
-              {{ row.status === 'ACTIVATED' ? '已激活' : '未使用' }}
-            </el-tag>
+            <el-tag :type="statusOf(row).type">{{ statusOf(row).text }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="createdAt" label="签发时间" width="170" />
@@ -98,5 +120,12 @@ async function activate() {
 <style scoped>
 .mb {
   margin-bottom: 20px;
+}
+
+.field-tip {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-top: 4px;
 }
 </style>
