@@ -84,18 +84,14 @@ function statusOf(row: ActivationCode) {
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="本机机器码">
-          <el-input :model-value="machineCode" readonly>
-            <template #append>
-              <el-button :loading="activating" type="primary" @click="activate">
-                生成激活码
-              </el-button>
-            </template>
-          </el-input>
-          <div class="field-tip">机器码由系统自动获取（设备指纹），无需手动填写</div>
-        </el-form-item>
         <el-form-item v-if="form.orderNo" label="关联订单">
           <el-input :model-value="form.orderNo" readonly />
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" size="large" :loading="activating" @click="activate">
+            生成激活码
+          </el-button>
+          <span class="form-tip">机器码由系统自动识别，无需手动填写</span>
         </el-form-item>
       </el-form>
     </el-card>
@@ -122,10 +118,9 @@ function statusOf(row: ActivationCode) {
   margin-bottom: 20px;
 }
 
-.field-tip {
-  font-size: 12px;
+.form-tip {
   color: var(--text-secondary);
-  line-height: 1.6;
-  margin-top: 4px;
+  font-size: 13px;
+  margin-left: 12px;
 }
 </style>

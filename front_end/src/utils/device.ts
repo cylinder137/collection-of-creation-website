@@ -10,6 +10,8 @@
  */
 
 const STORAGE_KEY = 'zwj_device_id'
+/** 机器码缓存：算好后存一份明文，供本地校验工具（license-checker）读取比对 */
+const MACHINE_CODE_KEY = 'zwj_machine_code'
 
 function genId(): string {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
@@ -44,8 +46,14 @@ async function sha256Hex(text: string): Promise<string> {
     .join('')
 }
 
-/** 获取本机机器码（设备指纹），异步计算 */
+/** 获取本机机器码（设备指纹），异步计算；结果缓存到 localStorage 供本地工具读取 */
 export async function getMachineCode(): Promise<string> {
+  try {
+    const cached = localStorage.getItem(MACHINE_CODE_KEY)
+    if (cached) return cached
+  } catch {
+    /* localStorage 不可用时忽略缓存 */
+  }
   const parts = [
     getDeviceId(),
     navigator.userAgent,
@@ -54,5 +62,11 @@ export async function getMachineCode(): Promise<string> {
     String(screen.colorDepth),
     Intl.DateTimeFormat().resolvedOptions().timeZone,
   ]
-  return sha256Hex(parts.join('|'))
+  const code = await sha256Hex(parts.join('|'))
+  try {
+    localStorage.setItem(MACHINE_CODE_KEY, code)
+  } catch {
+    /* 忽略写入失败 */
+  }
+  return code
 }
