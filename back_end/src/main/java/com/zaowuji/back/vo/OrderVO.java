@@ -18,5 +18,6 @@ public class OrderVO {
     private BigDecimal amount;
     /** 0待支付 1已支付 2已取消 3已退款 4已签发 */
     private Integer status;
+    private LocalDateTime paidAt;
     private LocalDateTime createdAt;
 }

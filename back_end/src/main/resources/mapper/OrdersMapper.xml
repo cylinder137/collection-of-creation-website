@@ -19,6 +19,20 @@
         WHERE id = #{id}
     </select>
 
+    <select id="selectAll" resultType="com.zaowuji.back.entity.Orders">
+        SELECT <include refid="allColumns"/>
+        FROM orders
+        ORDER BY id DESC
+    </select>
+
+    <update id="updateStatus">
+        UPDATE orders
+        SET status = #{status},
+            paid_at = #{paidAt},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
     <insert id="insert" parameterType="com.zaowuji.back.entity.Orders"
             useGeneratedKeys="true" keyProperty="id">
         INSERT INTO orders (order_no, user_id, product_id, product_name, amount, status, pay_type)

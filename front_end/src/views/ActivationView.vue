@@ -2,9 +2,9 @@
 import { onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useAppStore } from '@/stores'
-import { activationApi } from '@/api'
+import { activationApi, orderApi } from '@/api'
 import { getMachineCode, getStorageMode, setupSharedFolder } from '@/utils/device'
-import type { ActivationCode } from '@/types'
+import type { ActivationCode, Order } from '@/types'
 
 const store = useAppStore()
 const records = ref<ActivationCode[]>([])
@@ -12,6 +12,8 @@ const activating = ref(false)
 const machineCode = ref('')
 const storageMode = ref<'shared' | 'local' | 'none'>('none')
 const authorizing = ref(false)
+const orderInfo = ref<Order | null>(null)
+const orderLoading = ref(false)
 
 const form = reactive({
   productId: 1,
@@ -20,6 +22,39 @@ const form = reactive({
 })
 
 const formRef = ref()
+
+async function loadOrderInfo() {
+  if (!form.orderNo) {
+    orderInfo.value = null
+    return
+  }
+  orderLoading.value = true
+  try {
+    orderInfo.value = await orderApi.detail(form.orderNo)
+  } catch {
+    orderInfo.value = null
+  } finally {
+    orderLoading.value = false
+  }
+}
+
+/** 订单状态：0待人工核验 1已支付 2已取消 3已退款 4已签发 */
+function orderStatusOf(status: number) {
+  switch (status) {
+    case 0:
+      return { type: 'warning' as const, text: '待人工核验（管理员确认收款后可激活）' }
+    case 1:
+      return { type: 'success' as const, text: '已支付，可以激活' }
+    case 2:
+      return { type: 'info' as const, text: '已取消' }
+    case 3:
+      return { type: 'danger' as const, text: '已退款' }
+    case 4:
+      return { type: 'primary' as const, text: '已签发（可重复获取）' }
+    default:
+      return { type: 'info' as const, text: `未知(${status})` }
+  }
+}
 
 async function loadRecords() {
   if (!machineCode.value) return
@@ -38,6 +73,7 @@ async function refreshMachineCode() {
 onMounted(async () => {
   storageMode.value = await getStorageMode()
   await refreshMachineCode()
+  await loadOrderInfo()
 })
 
 async function authorizeFolder() {
@@ -58,6 +94,11 @@ async function authorizeFolder() {
 
 async function activate() {
   if (!machineCode.value) return
+  // 人工核验模式：关联订单待审核时拦截并提示
+  if (orderInfo.value && orderInfo.value.status === 0) {
+    ElMessage.warning('订单待人工审核：管理员确认收款后即可激活，请稍后再试')
+    return
+  }
   activating.value = true
   try {
     const code = await activationApi.activate({
@@ -67,6 +108,7 @@ async function activate() {
     })
     ElMessage.success(`激活码签发成功：${code.code}`)
     await loadRecords()
+    await loadOrderInfo()
   } catch (e: any) {
     ElMessage.error(e?.message || '激活码签发失败')
   } finally {
@@ -107,7 +149,19 @@ function statusOf(row: ActivationCode) {
           </el-select>
         </el-form-item>
         <el-form-item v-if="form.orderNo" label="关联订单">
-          <el-input :model-value="form.orderNo" readonly />
+          <div class="order-line">
+            <el-input :model-value="form.orderNo" readonly class="order-input" />
+            <el-tag
+              v-if="orderInfo"
+              :type="orderStatusOf(orderInfo.status).type"
+              :loading="orderLoading"
+            >
+              {{ orderStatusOf(orderInfo.status).text }}
+            </el-tag>
+            <el-button v-else size="small" text type="primary" @click="loadOrderInfo">
+              刷新状态
+            </el-button>
+          </div>
         </el-form-item>
         <el-form-item>
           <el-button type="primary" size="large" :loading="activating" @click="activate">
@@ -157,5 +211,16 @@ function statusOf(row: ActivationCode) {
   color: var(--text-secondary);
   font-size: 13px;
   margin-left: 12px;
+}
+
+.order-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.order-input {
+  max-width: 260px;
 }
 </style>

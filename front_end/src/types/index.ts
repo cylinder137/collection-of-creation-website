@@ -25,8 +25,8 @@ export interface Product {
 /** 创建订单入参 */
 export interface CreateOrderParams {
   productId: number
-  /** 下单人联系方式（手机/邮箱） */
-  contact: string
+  /** 联系方式（手机/邮箱），选填：人工核验模式下不强制收集 */
+  contact?: string
   remark?: string
 }
 
@@ -40,6 +40,7 @@ export interface Order {
   amount: number
   /** 0待支付 1已支付 2已取消 3已退款 4已签发 */
   status: number
+  paidAt: string | null
   createdAt: string
 }
 

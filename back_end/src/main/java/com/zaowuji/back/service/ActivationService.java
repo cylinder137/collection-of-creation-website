@@ -58,8 +58,9 @@ public class ActivationService {
             return toVO(existing, product, machineCode);
         }
 
-        // 可选订单校验：订单存在、未取消、产品匹配，激活码绑定该订单
+        // 可选订单校验：订单存在、已支付（人工核验）、产品匹配，激活码绑定该订单
         Long orderId = null;
+        LocalDateTime orderPaidAt = null;
         if (orderNo != null && !orderNo.isBlank()) {
             Orders order = ordersMapper.selectByOrderNo(orderNo);
             if (order == null) {
@@ -68,10 +69,18 @@ public class ActivationService {
             if (order.getStatus() != null && order.getStatus() == 2) {
                 throw new BizException("订单已取消，无法签发激活码");
             }
+            if (order.getStatus() != null && order.getStatus() == 3) {
+                throw new BizException("订单已退款，无法签发激活码");
+            }
+            // 人工核验模式：待支付(0) 不允许签发，须管理员后台确认收款
+            if (order.getStatus() != null && order.getStatus() == 0) {
+                throw new BizException("订单待人工审核，管理员确认收款后即可激活");
+            }
             if (!order.getProductId().equals(productId)) {
                 throw new BizException("订单与所选产品不匹配");
             }
             orderId = order.getId();
+            orderPaidAt = order.getPaidAt();
         }
 
         // 登记设备（幂等）
@@ -95,6 +104,11 @@ public class ActivationService {
         license.setStatus(0);      // 未激活
         license.setIssuedAt(LocalDateTime.now());
         licenseMapper.insert(license);
+
+        // 绑定订单的激活码签发成功 → 订单置「已签发(4)」，保留原支付时间
+        if (orderId != null) {
+            ordersMapper.updateStatus(orderId, 4, orderPaidAt);
+        }
 
         return toVO(license, product, machineCode);
     }

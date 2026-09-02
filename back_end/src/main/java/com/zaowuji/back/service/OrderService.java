@@ -13,13 +13,14 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
- * 订单服务：创建订单 / 查询订单
+ * 订单服务：创建订单 / 查询订单 / 订单列表 / 人工核验通过
  * <p>
- * 注：微信支付回调（支付成功 → 订单状态流转 → 签发激活码）为后续迭代，
- * 当前版本先打通「下单 → 订单落库 → 查询」链路。
+ * 微信支付 API 暂未开通，支付采用「人工核验」模式：
+ * 用户下单(待支付) → 扫码转账 → 管理员后台一键通过(置已支付) → 用户激活页签发激活码。
  */
 @Service
 public class OrderService {
@@ -84,6 +85,46 @@ public class OrderService {
         return toVO(orders);
     }
 
+    /**
+     * 订单列表（新 → 旧），供管理后台展示与人工核验
+     */
+    public List<OrderVO> list() {
+        return ordersMapper.selectAll().stream().map(this::toVO).toList();
+    }
+
+    /**
+     * 人工核验通过：管理员确认收款后，待支付(0) → 已支付(1)
+     *
+     * @param orderNo 订单号
+     * @return 更新后的订单 VO
+     */
+    @Transactional
+    public OrderVO reviewPass(String orderNo) {
+        Orders orders = ordersMapper.selectByOrderNo(orderNo);
+        if (orders == null) {
+            throw new BizException(404, "订单不存在：" + orderNo);
+        }
+        Integer status = orders.getStatus();
+        if (status != null && status == 2) {
+            throw new BizException("订单已取消，无法通过审核");
+        }
+        if (status != null && status == 3) {
+            throw new BizException("订单已退款，无法通过审核");
+        }
+        if (status != null && status == 1) {
+            // 幂等：已通过审核直接返回，避免重复操作报错
+            return toVO(orders);
+        }
+        if (status != null && status == 4) {
+            return toVO(orders);
+        }
+        LocalDateTime now = LocalDateTime.now();
+        ordersMapper.updateStatus(orders.getId(), 1, now);
+        orders.setStatus(1);
+        orders.setPaidAt(now);
+        return toVO(orders);
+    }
+
     private String generateOrderNo() {
         // 时间戳 + 4 位随机数，32 位内唯一
         return LocalDateTime.now().format(ORDER_NO_FMT) + ThreadLocalRandom.current().nextInt(1000, 10000);
@@ -97,6 +138,7 @@ public class OrderService {
         vo.setProductName(o.getProductName());
         vo.setAmount(BigDecimal.valueOf(o.getAmount(), 2));
         vo.setStatus(o.getStatus());
+        vo.setPaidAt(o.getPaidAt());
         vo.setCreatedAt(o.getCreatedAt());
         return vo;
     }

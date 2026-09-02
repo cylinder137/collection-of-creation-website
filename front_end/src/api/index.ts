@@ -21,13 +21,21 @@ export const productApi = {
 
 /** 订单 */
 export const orderApi = {
-  /** 创建订单（微信支付待接入） */
+  /** 创建订单（人工核验支付：扫码转账后管理员后台确认） */
   create(data: CreateOrderParams) {
     return request<Order>({ url: '/orders', method: 'post', data })
   },
   /** 查询订单 */
   detail(orderNo: string) {
     return request<Order>({ url: `/orders/${orderNo}`, method: 'get' })
+  },
+  /** 订单列表（管理后台） */
+  list() {
+    return request<Order[]>({ url: '/orders', method: 'get' })
+  },
+  /** 人工核验通过：待支付 → 已支付（管理后台一键通过） */
+  reviewPass(orderNo: string) {
+    return request<Order>({ url: `/orders/${orderNo}/review-pass`, method: 'post' })
   },
 }
 
