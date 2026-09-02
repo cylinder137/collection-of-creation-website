@@ -37,15 +37,34 @@ const router = createRouter({
           path: 'admin',
           name: 'admin',
           component: () => import('@/views/AdminView.vue'),
-          meta: { title: '管理后台' },
+          meta: { title: '管理后台', requiresAuth: true },
         },
       ],
+    },
+    {
+      // 登录页：独立全屏页面，不套 DefaultLayout
+      path: '/login',
+      name: 'login',
+      component: () => import('@/views/LoginView.vue'),
+      meta: { title: '登录', public: true },
     },
     {
       path: '/:pathMatch(.*)*',
       redirect: '/',
     },
   ],
+})
+
+// 导航守卫：requiresAuth 页面需登录，未登录跳 /login 并带 redirect；已登录访问登录页回首页
+router.beforeEach((to) => {
+  const token = localStorage.getItem('coc_token')
+  if (to.meta.requiresAuth && !token) {
+    return { name: 'login', query: { redirect: to.fullPath } }
+  }
+  if (to.name === 'login' && token) {
+    return { path: '/' }
+  }
+  return true
 })
 
 router.afterEach((to) => {

@@ -40,3 +40,19 @@
 - `vite.config.ts`：生产构建剔除 console.log/debug 与 debugger 语句
 - 后端配合点（见 README「反爬设计」）：校验签名与时间戳防重放、敏感接口可返回编码 payload、网关限流
 
+## 2026-09-02 09:10 ｜ 前端部署工具与上线准备
+- 新增 `scripts/serve-dist.mjs`（零依赖静态服务器）：服务 dist/，MIME/缓存头（assets 长缓存、index.html no-cache）、SPA fallback、目录穿越防护，`--port`/`--host`（提交人：大林 / WorkBuddy）
+- 新增 `DEPLOY.md`：Cloudflare Tunnel 同源部署指南（cloudflared ingress 配置 `/api`→8080、其余→8081；服务器构建与常驻步骤；发版流程）
+- 构建验证：`vite build` 通过；serve-dist 本地实测 `/`（200+no-cache+正确标题）、assets（immutable 缓存）、fallback 均正常
+- 部署架构：域名 collectionofcreations.uk → Tunnel → /api 到 Spring 8080、其余到前端 8081，同源无跨域
+
+## 2026-09-02 09:40 ｜ 新增登录界面与认证体系
+- 新增 `views/LoginView.vue`：品牌风全屏登录页（el-form 校验、记住我、加载态、忘记密码/返回首页）（提交人：大林 / WorkBuddy）
+- 新增 `stores/auth.ts`：认证状态（token/userInfo，localStorage 持久化，isLoggedIn/isAdmin，login/logout）
+- `types`：新增 LoginParams / UserInfo / LoginResult；`api`：新增 authApi（/auth/login、/auth/logout、/auth/me，后端契约见注释）
+- `http.ts`：请求自动携带 `Authorization: Bearer <token>`；401 自动清理登录态并跳 /login
+- `router`：/login 独立路由（不套布局）+ 导航守卫（admin 需登录，未登录带 redirect 跳登录页；已登录访问 /login 回首页）
+- `DefaultLayout`：顶栏右侧改为登录按钮 / 用户下拉（管理后台入口 + 退出登录）
+- 后端配合点：POST /auth/login 返回 { token, userInfo }（含 role），其余接口按 Bearer token 鉴权
+- `npm run type-check` 与 `vite build` 均通过
+

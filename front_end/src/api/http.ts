@@ -17,6 +17,11 @@ const http: AxiosInstance = axios.create({
 http.interceptors.request.use((config) => {
   const signed = signRequest(config.method ?? 'get', config.url ?? '')
   Object.assign(config.headers, signed)
+  // 已登录则携带访问令牌
+  const token = localStorage.getItem('coc_token')
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
+  }
   return config
 })
 
@@ -38,6 +43,16 @@ http.interceptors.response.use(
     return res
   },
   (error) => {
+    // 401：令牌无效/过期 → 清理本地登录态并跳登录页（登录页自身除外，避免密码错误时刷新页面）
+    if (error.response?.status === 401) {
+      localStorage.removeItem('coc_token')
+      localStorage.removeItem('coc_user')
+      if (!location.hash.startsWith('#/login')) {
+        ElMessage.warning('登录已过期，请重新登录')
+        location.hash = '#/login'
+        return Promise.reject(error)
+      }
+    }
     ElMessage.error(error.response?.data?.message || error.message || '网络错误')
     return Promise.reject(error)
   },

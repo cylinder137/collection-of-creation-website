@@ -1,7 +1,11 @@
 <script setup lang="ts">
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
+import { useAuthStore } from '@/stores/auth'
 
 const route = useRoute()
+const router = useRouter()
+const auth = useAuthStore()
 
 const navItems = [
   { path: '/', label: '首页' },
@@ -9,6 +13,19 @@ const navItems = [
   { path: '/activation', label: '激活码' },
   { path: '/admin', label: '管理后台' },
 ]
+
+async function onUserCommand(command: string) {
+  if (command === 'logout') {
+    await auth.logout()
+    ElMessage.success('已退出登录')
+    // 当前在需要登录的页面时退出后回首页（守卫也会拦截，这里主动跳转更顺滑）
+    if (route.meta.requiresAuth) {
+      router.push('/')
+    }
+  } else if (command === 'admin') {
+    router.push('/admin')
+  }
+}
 </script>
 
 <template>
@@ -31,6 +48,24 @@ const navItems = [
           </router-link>
         </nav>
         <div class="header-actions">
+          <template v-if="auth.isLoggedIn">
+            <el-dropdown trigger="click" @command="onUserCommand">
+              <span class="user-entry">
+                <el-icon><User /></el-icon>
+                <span>{{ auth.userInfo?.nickname || auth.userInfo?.username }}</span>
+                <el-icon :size="12"><ArrowDown /></el-icon>
+              </span>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item v-if="auth.isAdmin" command="admin">管理后台</el-dropdown-item>
+                  <el-dropdown-item command="logout" divided>退出登录</el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+          </template>
+          <template v-else>
+            <el-button round @click="$router.push('/login')">登录</el-button>
+          </template>
           <el-button type="primary" round @click="$router.push('/products')">
             立即购买
           </el-button>
@@ -106,6 +141,24 @@ const navItems = [
 
 .header-actions {
   margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-entry {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: var(--text-main);
+  cursor: pointer;
+  padding: 6px 4px;
+  outline: none;
+}
+
+.user-entry:hover {
+  color: var(--brand-color);
 }
 
 .layout-main {

@@ -50,3 +50,26 @@ export interface ActivateParams {
   productId: number
   machineCode: string
 }
+
+/** 登录入参 */
+export interface LoginParams {
+  username: string
+  password: string
+  /** 记住我（由后端控制 token 时效） */
+  remember?: boolean
+}
+
+/** 用户信息 */
+export interface UserInfo {
+  id: number
+  username: string
+  nickname?: string
+  /** 角色：admin 可进管理后台 */
+  role?: 'admin' | 'user'
+}
+
+/** 登录返回（后端契约：POST /auth/login → data 为此结构） */
+export interface LoginResult {
+  token: string
+  userInfo: UserInfo
+}

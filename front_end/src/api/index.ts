@@ -5,7 +5,26 @@ import type {
   Order,
   ActivationCode,
   ActivateParams,
+  LoginParams,
+  LoginResult,
+  UserInfo,
 } from '@/types'
+
+/** 认证（后端契约见 front_end/README「接口约定」） */
+export const authApi = {
+  /** 登录：POST /auth/login → { token, userInfo } */
+  login(data: LoginParams) {
+    return request<LoginResult>({ url: '/auth/login', method: 'post', data })
+  },
+  /** 退出登录（使服务端 token 失效） */
+  logout() {
+    return request<void>({ url: '/auth/logout', method: 'post' })
+  },
+  /** 获取当前登录用户信息 */
+  me() {
+    return request<UserInfo>({ url: '/auth/me', method: 'get' })
+  },
+}
 
 /** 产品 */
 export const productApi = {
