@@ -1,43 +1,43 @@
-import { createRouter, createWebHashHistory } from 'vue-router'
-import DefaultLayout from '@/layouts/DefaultLayout.vue'
+import { createRouter, createWebHistory } from 'vue-router'
+import { getAdminToken } from '@/api/http'
 
 const router = createRouter({
-  // 使用 hash 模式：静态服务器/内网穿透场景无需额外配置 history fallback
-  history: createWebHashHistory(),
+  /**
+   * history 模式：官网与管理后台共用同一站点
+   * - /                 官网主页（产品展示 + 安装包下载）
+   * - /admin            管理员登录（官网任何位置均无入口，只能靠管理员手输 URL 直达）
+   * - /admin/dashboard  管理后台（需登录）
+   */
+  history: createWebHistory(),
   routes: [
     {
       path: '/',
-      component: DefaultLayout,
+      component: () => import('@/layouts/OfficialLayout.vue'),
       children: [
         {
           path: '',
           name: 'home',
           component: () => import('@/views/HomeView.vue'),
-          meta: { title: '首页' },
+          meta: { title: '造物集 · 创造者的集合' },
         },
+      ],
+    },
+    {
+      path: '/admin',
+      name: 'admin-login',
+      component: () => import('@/views/AdminLoginView.vue'),
+      meta: { title: '管理员登录 · 造物集' },
+    },
+    {
+      path: '/admin',
+      component: () => import('@/layouts/AdminLayout.vue'),
+      meta: { requiresAuth: true },
+      children: [
         {
-          path: 'products',
-          name: 'products',
-          component: () => import('@/views/ProductsView.vue'),
-          meta: { title: '产品中心' },
-        },
-        {
-          path: 'purchase/:productId?',
-          name: 'purchase',
-          component: () => import('@/views/PurchaseView.vue'),
-          meta: { title: '购买' },
-        },
-        {
-          path: 'activation',
-          name: 'activation',
-          component: () => import('@/views/ActivationView.vue'),
-          meta: { title: '激活码' },
-        },
-        {
-          path: 'admin',
-          name: 'admin',
-          component: () => import('@/views/AdminView.vue'),
-          meta: { title: '管理后台' },
+          path: 'dashboard',
+          name: 'admin-dashboard',
+          component: () => import('@/views/AdminDashboardView.vue'),
+          meta: { title: '管理后台 · 造物集' },
         },
       ],
     },
@@ -48,9 +48,26 @@ const router = createRouter({
   ],
 })
 
+// 路由守卫：管理后台需持令牌；已登录时访问登录页直接进后台
+router.beforeEach((to) => {
+  const token = getAdminToken()
+
+  if (to.matched.some((r) => r.meta.requiresAuth)) {
+    if (!token) {
+      return { path: '/admin' }
+    }
+    return true
+  }
+
+  if (to.name === 'admin-login' && token) {
+    return { path: '/admin/dashboard' }
+  }
+  return true
+})
+
 router.afterEach((to) => {
   const title = to.meta.title as string | undefined
-  document.title = title ? `${title} · 造物集` : '造物集 · 创造者的集合'
+  document.title = title ?? '造物集 · 创造者的集合'
 })
 
 export default router

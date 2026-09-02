@@ -16,6 +16,8 @@ public class ProductVO {
     private String description;
     private String version;
     private String coverUrl;
+    /** 安装包下载地址（exe 自解压安装包） */
+    private String downloadUrl;
     /** 价格（元） */
     private BigDecimal price;
     private Integer status;

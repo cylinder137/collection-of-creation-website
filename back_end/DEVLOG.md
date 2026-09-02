@@ -32,3 +32,10 @@
 - 安全审查后优化 schema.sql：① payment.order_no 加 UNIQUE（防微信重复回调）② 金额/状态加 CHECK 约束 ③ machine_code 改为只存 SHA-256 哈希（64 字符，不存明文硬件指纹）④ user.phone 与 payment.notify_raw 改为加密存储（个保法合规）⑤ 删除 device.status 冗余字段（激活状态以 license 表为准）⑥ 排序规则升级 utf8mb4_0900_ai_ci ⑦ license 新增 license_type（永久/订阅）⑧ 新增 idx_orders_status 索引
 - 新增 Flyway 版本化迁移：back_end/src/main/resources/db/migration/V1__init.sql（Spring Boot 启动自动建表，后续变更新增 V2__xxx.sql，禁止修改已执行脚本）
 - 待办：pom.xml 需引入 flyway-core + flyway-mysql 依赖；生成 MyBatis 实体/Mapper；编写产品/订单/激活码业务接口（提交人：小麦能磨面 / MaiMai11185）
+
+## 2026-09-02 ｜ 管理端无状态鉴权强化 + 产品 CRUD + 激活码吊销
+- AdminAuthInterceptor 升级：验签 HMAC 令牌后回库核验管理员存在且启用（账号被删/禁用后旧令牌立即失效），满足「每次管理员操作逐次核验身份」要求
+- AdminController 新增：GET/POST /admin/products、PUT /admin/products/{id}、PATCH /admin/products/{id}/status（价格元↔分换算）、POST /admin/licenses/{id}/revoke（吊销并记录 revoked_at）
+- ProductService 增加管理端 create/update/updateStatus（编码唯一校验 + @CacheEvict 全量失效，官网 5 分钟缓存写后立即生效）；ProductMapper/LicenseMapper 补 selectAll/insert/updateById/updateStatus 及对应 XML
+- 配套文档：docs/RSA与激活码接入文档.md（面向 coBrain 客户端：RSA 密钥体系 / 机器码规范 / 下单-核验-激活-验签全流程 / Python·C# 验签示例 / 错误码表）
+- mvn compile 通过（提交人：靠谱 / WorkBuddy）

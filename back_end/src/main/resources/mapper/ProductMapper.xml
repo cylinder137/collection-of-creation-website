@@ -3,7 +3,7 @@
 <mapper namespace="com.zaowuji.back.mapper.ProductMapper">
 
     <sql id="allColumns">
-        id, name, code, description, price, version, cover_url, status, sort, created_at, updated_at
+        id, name, code, description, price, version, cover_url, download_url, status, sort, created_at, updated_at
     </sql>
 
     <select id="selectOnSale" resultType="com.zaowuji.back.entity.Product">
@@ -24,5 +24,37 @@
         FROM product
         WHERE code = #{code}
     </select>
+
+    <select id="selectAll" resultType="com.zaowuji.back.entity.Product">
+        SELECT <include refid="allColumns"/>
+        FROM product
+        ORDER BY sort ASC, id ASC
+    </select>
+
+    <insert id="insert" parameterType="com.zaowuji.back.entity.Product"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO product (name, code, description, price, version, cover_url, download_url, status, sort)
+        VALUES (#{name}, #{code}, #{description}, #{price}, #{version}, #{coverUrl}, #{downloadUrl}, #{status}, #{sort})
+    </insert>
+
+    <update id="updateById" parameterType="com.zaowuji.back.entity.Product">
+        UPDATE product
+        SET name         = #{name},
+            code         = #{code},
+            description  = #{description},
+            price        = #{price},
+            version      = #{version},
+            cover_url    = #{coverUrl},
+            download_url = #{downloadUrl},
+            status       = #{status},
+            sort         = #{sort}
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateStatus">
+        UPDATE product
+        SET status = #{status}
+        WHERE id = #{id}
+    </update>
 
 </mapper>

@@ -8,6 +8,7 @@ import com.zaowuji.back.entity.Product;
 import com.zaowuji.back.mapper.DeviceMapper;
 import com.zaowuji.back.mapper.LicenseMapper;
 import com.zaowuji.back.mapper.OrdersMapper;
+import com.zaowuji.back.util.RsaUtils;
 import com.zaowuji.back.util.SecurityUtils;
 import com.zaowuji.back.vo.ActivationCodeVO;
 import org.springframework.stereotype.Service;
@@ -15,7 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * 激活码服务：提交机器码申请激活码 / 查询激活记录
@@ -92,14 +92,15 @@ public class ActivationService {
             deviceMapper.insert(device);
         }
 
-        // 签发激活码（payload = 机器码哈希 + 产品ID，sign 占位后续接 RSA）
+        // 签发激活码（license_key = 机器码哈希-产品ID；sign = RSA 私钥签名，客户端/官网可用公钥验签）
         License license = new License();
         license.setLicenseKey(hash + "-" + productId);
         license.setMachineCode(hash);
         license.setProductId(productId);
         license.setOrderId(orderId);
         license.setDeviceId(device.getId());
-        license.setSign("RSA_PENDING_" + UUID.randomUUID()); // TODO: 接入 RSA 私钥签发
+        license.setSign(RsaUtils.sign(RsaUtils.ensureKeyPair().getPrivate(),
+                hash + "-" + productId));
         license.setLicenseType(1); // 永久
         license.setStatus(0);      // 未激活
         license.setIssuedAt(LocalDateTime.now());
@@ -127,6 +128,7 @@ public class ActivationService {
         ActivationCodeVO vo = new ActivationCodeVO();
         vo.setId(l.getId());
         vo.setCode(l.getLicenseKey());
+        vo.setSign(l.getSign());
         vo.setProductId(l.getProductId());
         vo.setProductName(product.getName());
         vo.setMachineCode(machineCode);

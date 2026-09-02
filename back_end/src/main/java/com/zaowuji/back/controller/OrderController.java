@@ -25,27 +25,15 @@ public class OrderController {
         this.orderService = orderService;
     }
 
-    /** 创建订单（人工核验支付模式） */
+    /** 创建订单（桌面端购买/激活流程的下单接口） */
     @PostMapping
     public ApiResponse<OrderVO> create(@Valid @RequestBody CreateOrderParams params) {
         return ApiResponse.ok(orderService.create(params.getProductId(), params.getContact()));
     }
 
-    /** 查询订单 */
+    /** 查询订单（按订单号，桌面端核验订单状态用） */
     @GetMapping("/{orderNo}")
     public ApiResponse<OrderVO> detail(@PathVariable String orderNo) {
         return ApiResponse.ok(orderService.detail(orderNo));
-    }
-
-    /** 订单列表（管理后台，新 → 旧） */
-    @GetMapping
-    public ApiResponse<java.util.List<OrderVO>> list() {
-        return ApiResponse.ok(orderService.list());
-    }
-
-    /** 人工核验通过：待支付 → 已支付（管理员确认收款后调用） */
-    @PostMapping("/{orderNo}/review-pass")
-    public ApiResponse<OrderVO> reviewPass(@PathVariable String orderNo) {
-        return ApiResponse.ok(orderService.reviewPass(orderNo));
     }
 }

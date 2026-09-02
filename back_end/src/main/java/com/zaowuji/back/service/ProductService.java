@@ -4,6 +4,7 @@ import com.zaowuji.back.common.BizException;
 import com.zaowuji.back.entity.Product;
 import com.zaowuji.back.mapper.ProductMapper;
 import com.zaowuji.back.vo.ProductVO;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
@@ -11,7 +12,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 /**
- * 产品服务：列表/详情（带本地缓存，重复请求直接命中缓存，不查库）
+ * 产品服务：官网侧列表/详情（带缓存）+ 管理后台 CRUD（写后失效缓存）
  */
 @Service
 public class ProductService {
@@ -55,6 +56,79 @@ public class ProductService {
         return p;
     }
 
+    // ==================== 管理后台 ====================
+
+    /** 全部产品（含下架） */
+    public List<ProductVO> listAll() {
+        return productMapper.selectAll().stream()
+                .map(this::toVO)
+                .toList();
+    }
+
+    /** 新建产品（写后清缓存，官网立即生效） */
+    @CacheEvict(cacheNames = "products", allEntries = true)
+    public ProductVO create(Product input) {
+        validate(input);
+        Product dup = productMapper.selectByCode(input.getCode());
+        if (dup != null) {
+            throw new BizException("产品编码已存在：" + input.getCode());
+        }
+        if (input.getSort() == null) {
+            input.setSort(0);
+        }
+        productMapper.insert(input);
+        return toVO(productMapper.selectById(input.getId()));
+    }
+
+    /** 更新产品（全量字段） */
+    @CacheEvict(cacheNames = "products", allEntries = true)
+    public ProductVO update(Long id, Product input) {
+        Product exist = productMapper.selectById(id);
+        if (exist == null) {
+            throw new BizException(404, "产品不存在");
+        }
+        validate(input);
+        Product dup = productMapper.selectByCode(input.getCode());
+        if (dup != null && !dup.getId().equals(id)) {
+            throw new BizException("产品编码已被其他产品占用：" + input.getCode());
+        }
+        if (input.getSort() == null) {
+            input.setSort(exist.getSort());
+        }
+        input.setId(id);
+        productMapper.updateById(input);
+        return toVO(productMapper.selectById(id));
+    }
+
+    /** 上架 / 下架 */
+    @CacheEvict(cacheNames = "products", allEntries = true)
+    public ProductVO updateStatus(Long id, Integer status) {
+        Product exist = productMapper.selectById(id);
+        if (exist == null) {
+            throw new BizException(404, "产品不存在");
+        }
+        if (status == null || (status != 0 && status != 1)) {
+            throw new BizException("status 仅支持 0(下架) / 1(上架)");
+        }
+        productMapper.updateStatus(id, status);
+        return toVO(productMapper.selectById(id));
+    }
+
+    private void validate(Product p) {
+        if (p.getName() == null || p.getName().isBlank()) {
+            throw new BizException("产品名称不能为空");
+        }
+        if (p.getCode() == null || !p.getCode().matches("[A-Za-z0-9_-]{1,64}")) {
+            throw new BizException("产品编码仅允许字母/数字/下划线/中划线，长度 1-64");
+        }
+        if (p.getPrice() == null || p.getPrice() < 0) {
+            throw new BizException("价格不能为负数");
+        }
+        if (p.getStatus() == null || (p.getStatus() != 0 && p.getStatus() != 1)) {
+            throw new BizException("status 仅支持 0(下架) / 1(上架)");
+        }
+    }
+
     private ProductVO toVO(Product p) {
         ProductVO vo = new ProductVO();
         vo.setId(p.getId());
@@ -63,6 +137,7 @@ public class ProductService {
         vo.setDescription(p.getDescription());
         vo.setVersion(p.getVersion());
         vo.setCoverUrl(p.getCoverUrl());
+        vo.setDownloadUrl(p.getDownloadUrl());
         // 分 -> 元
         vo.setPrice(BigDecimal.valueOf(p.getPrice(), 2));
         vo.setStatus(p.getStatus());

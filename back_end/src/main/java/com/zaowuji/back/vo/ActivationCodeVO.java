@@ -10,8 +10,10 @@ import java.time.LocalDateTime;
 @Data
 public class ActivationCodeVO {
     private Long id;
-    /** 激活码 */
+    /** 激活码（payload：机器码哈希-产品ID） */
     private String code;
+    /** RSA 私钥签名（base64url），客户端可用公钥离线验签 */
+    private String sign;
     private Long productId;
     private String productName;
     /** 绑定的机器码（明文回显，前端展示用） */

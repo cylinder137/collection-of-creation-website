@@ -14,7 +14,13 @@
         WHERE license_key = #{licenseKey}
     </select>
 
-    <select id="selectById" resultType="com.zaowuji.back.entity.License">
+        <select id="selectAll" resultType="com.zaowuji.back.entity.License">
+        SELECT <include refid="allColumns"/>
+        FROM license
+        ORDER BY id DESC
+    </select>
+
+<select id="selectById" resultType="com.zaowuji.back.entity.License">
         SELECT <include refid="allColumns"/>
         FROM license
         WHERE id = #{id}
@@ -41,5 +47,13 @@
         VALUES (#{licenseKey}, #{machineCode}, #{productId}, #{orderId}, #{userId}, #{deviceId},
                 #{sign}, #{licenseType}, #{status}, #{issuedAt}, #{activatedAt}, #{expiresAt}, #{revokedAt})
     </insert>
+
+    <update id="updateStatus">
+        UPDATE license
+        SET status = #{status},
+            activated_at = COALESCE(#{activatedAt}, activated_at),
+            revoked_at = COALESCE(#{revokedAt}, revoked_at)
+        WHERE id = #{id}
+    </update>
 
 </mapper>
