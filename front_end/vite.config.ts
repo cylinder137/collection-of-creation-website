@@ -13,6 +13,8 @@ export default defineConfig({
   server: {
     port: 5173,
     host: true,
+    // 允许通过任意域名/Host 访问（花生壳/Cloudflare 等内网穿透域名），方便外网联调
+    allowedHosts: true,
     // 后端接口代理：开发环境把 /api 转发到 Spring Boot（默认 8080）
     proxy: {
       '/api': {
