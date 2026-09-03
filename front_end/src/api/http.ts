@@ -1,5 +1,6 @@
 import axios, { type AxiosInstance, type AxiosRequestConfig } from 'axios'
 import { ElMessage } from 'element-plus'
+import { signRequest, decodePayload } from './sign'
 
 /**
  * HTTP 客户端封装
@@ -8,6 +9,8 @@ import { ElMessage } from 'element-plus'
  * - 管理后台接口（/api/admin/**）自动携带 Authorization: Bearer <token>
  *   token 为后端签发的无状态令牌，登录后缓存于 localStorage，后端每次请求都会重新核验
  * - 统一解包 { code, data, message }；业务失败与网络异常统一提示
+ * - 反爬：请求自动带签名头（X-Timestamp/X-Nonce/X-Sign，见 api/sign.ts）；
+ *   敏感响应经 XOR+Base64 编码传输时自动解码（decodePayload）
  */
 
 const TOKEN_KEY = 'coc_admin_token'
@@ -40,6 +43,13 @@ http.interceptors.request.use((config) => {
   return config
 })
 
+// 请求拦截器（反爬）：每个请求附带时间戳 + 随机数 + 签名，裸爬虫直接调接口会被后端拒绝
+http.interceptors.request.use((config) => {
+  const signed = signRequest(config.method ?? 'get', config.url ?? '')
+  Object.assign(config.headers, signed)
+  return config
+})
+
 /** 是否是管理后台页面（用于 401 时判断要不要跳登录） */
 function isAdminPage(): boolean {
   return window.location.pathname.startsWith('/admin')
@@ -47,8 +57,12 @@ function isAdminPage(): boolean {
 
 http.interceptors.response.use(
   (response) => {
+    // 反爬：敏感响应经 XOR+Base64 编码传输时，先解码还原
+    let res = response.data
+    if (res && typeof res === 'object' && typeof res.payload === 'string') {
+      res = decodePayload(res.payload)
+    }
     // 约定统一响应 { code, data, message }
-    const res = response.data
     if (res && typeof res === 'object' && 'code' in res) {
       if (res.code === 0 || res.code === 200) {
         return res.data
