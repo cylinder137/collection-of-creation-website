@@ -43,7 +43,7 @@ public class AdminFileController {
      * 上传文件
      *
      * @param file 文件内容（multipart）
-     * @param kind cover=封面图；package/exe=安装包
+     * @param kind cover=封面图；qr=收款码图片；package/exe=安装包
      * @return { url: "/uploads/{kind}/{文件名}" }
      */
     @PostMapping("/upload")
@@ -53,12 +53,13 @@ public class AdminFileController {
             throw new BizException("请选择要上传的文件");
         }
         boolean isPackage = "package".equalsIgnoreCase(kind) || "exe".equalsIgnoreCase(kind);
+        boolean isQr = "qr".equalsIgnoreCase(kind) || "payqr".equalsIgnoreCase(kind);
         Set<String> allowExts = isPackage ? PACKAGE_EXTS : COVER_EXTS;
         String ext = extOf(file.getOriginalFilename());
         if (!allowExts.contains(ext)) {
             throw new BizException("不支持的文件类型 ." + ext + "，仅允许：" + String.join("/", allowExts));
         }
-        String dir = isPackage ? "package" : "cover";
+        String dir = isPackage ? "package" : (isQr ? "qr" : "cover");
         try {
             Path targetDir = uploadRoot.resolve(dir);
             Files.createDirectories(targetDir);

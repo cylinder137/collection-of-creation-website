@@ -164,6 +164,7 @@ public class ProductService {
         vo.setDescription(p.getDescription());
         vo.setVersion(p.getVersion());
         vo.setCoverUrl(p.getCoverUrl());
+        vo.setPayQrUrl(p.getPayQrUrl());
         vo.setDownloadUrl(p.getDownloadUrl());
         // 分 -> 元
         vo.setPrice(BigDecimal.valueOf(p.getPrice(), 2));

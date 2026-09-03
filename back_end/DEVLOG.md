@@ -45,3 +45,11 @@
 - 密钥经环境变量 `DEEPSEEK_API_KEY` 注入（application.yml `zaowuji.ai.*`），不落仓库、不进前端；含角色/长度/轮数校验、连接与读超时、异常兜底
 - `后端接口文档.md` 新增「10. AI 客服对话（DeepSeek 转发）」章节（请求/响应示例、校验规则、上游官方接口调用格式、配置项）
 - `mvn compile` 通过（提交人：Claw 助手 / cylinder137 授权）
+
+## 2026-09-03 ｜ 产品文件上传/删除 + 收款码接口化（提交人：Tinker / cylinder137 授权）
+- product 表 V3 migration 新增 pay_qr_url（收款码图片地址，每产品独立配置）
+- 新增 POST /api/admin/upload（multipart：kind=cover/qr/package，白名单+2GB 上限，存 zaowuji.upload-dir 默认 ./uploads/{cover|qr|package}/）
+- 新增 DELETE /api/admin/products/{id}（有订单/激活码关联时拒绝，防历史悬空）
+- 新增 GET /api/products/{id}/pay-qr（收款码图片流；相对路径回读文件 / 绝对 URL 302）
+- WebConfig 静态映射 /uploads/**；产品实体/VO/入参/XML 全链路加 payQrUrl
+- 文档：新建 docs/API接口文档.md（总接口文档，含 Base URL）；删除过时的 back_end/后端接口文档.md 与根 DEPLOYMENT.md（已备份 archives）

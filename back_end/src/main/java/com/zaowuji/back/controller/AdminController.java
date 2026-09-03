@@ -180,6 +180,7 @@ public class AdminController {
         p.setDescription(params.getDescription());
         p.setVersion(params.getVersion());
         p.setCoverUrl(params.getCoverUrl());
+        p.setPayQrUrl(params.getPayQrUrl());
         p.setDownloadUrl(params.getDownloadUrl());
         // 元 → 分（四舍五入，避免浮点误差）
         if (params.getPrice() != null) {

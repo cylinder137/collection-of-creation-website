@@ -101,7 +101,7 @@ export const adminApi = {
    * 上传文件（封面图 cover / 安装包 package），返回 /uploads/... 相对 URL
    * （走 /api/admin/**，自动携带 Bearer 令牌与反爬签名头）
    */
-  uploadFile(file: File, kind: 'cover' | 'package') {
+  uploadFile(file: File, kind: 'cover' | 'qr' | 'package') {
     const fd = new FormData()
     fd.append('file', file)
     fd.append('kind', kind)

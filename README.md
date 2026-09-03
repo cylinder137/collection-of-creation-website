@@ -16,6 +16,7 @@
 
 > 📘 **思路转变背景**（为何从「网页端在线发售激活码」改为「桌面端闭环授权」）：见 `docs/激活码发售思路转变说明.md`
 > 🔌 **客户端接入细节**（RSA 密钥体系 / 机器码规范 / 接口调用）：见 `docs/RSA与激活码接入文档.md`
+> 📡 **全部接口文档（含 Base URL / 收款码 / 安装包直链 / 文件上传）**：见 `docs/API接口文档.md`
 
 #### 技术栈
 - **前端（front_end）**：Vue 3 + Vite + TypeScript + Element Plus + Pinia
@@ -65,6 +66,7 @@ collection-of-creation-website/
 ├── front_end/          # 前端（Vue3 + Vite），开发日志见 front_end/DEVLOG.md
 ├── back_end/           # 后端（Spring Boot 3），开发日志见 back_end/DEVLOG.md
 ├── docs/               # 设计/接入文档
+│   ├── API接口文档.md              # 总接口文档：Base URL / 公开+管理端全部接口 / 上传
 │   ├── 激活码发售思路转变说明.md   # 业务模式决策：网页发售 → 桌面端驱动激活
 │   └── RSA与激活码接入文档.md      # 客户端接入：RSA 密钥体系 / 机器码 / 接口调用
 └── README.md           # 项目说明与开发规范

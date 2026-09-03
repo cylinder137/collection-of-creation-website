@@ -34,6 +34,7 @@ export interface ProductInput {
   description?: string
   version?: string
   coverUrl?: string
+  payQrUrl?: string
   downloadUrl?: string
   /** 价格（元） */
   price: number

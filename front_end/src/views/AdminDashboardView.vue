@@ -92,6 +92,7 @@ const productForm = reactive<ProductInput>({
   description: '',
   version: '',
   coverUrl: '',
+  payQrUrl: '',
   downloadUrl: '',
   price: 0,
   status: 1,
@@ -136,6 +137,7 @@ function openEdit(p: Product) {
     description: p.description ?? '',
     version: p.version ?? '',
     coverUrl: p.coverUrl ?? '',
+    payQrUrl: p.payQrUrl ?? '',
     downloadUrl: p.downloadUrl ?? '',
     price: p.price,
     status: p.status,
@@ -192,8 +194,10 @@ async function removeProduct(p: Product) {
 
 const uploadingPkg = ref(false)
 const uploadingCover = ref(false)
+const uploadingQr = ref(false)
 const pkgInputRef = ref<HTMLInputElement>()
 const coverInputRef = ref<HTMLInputElement>()
+const qrInputRef = ref<HTMLInputElement>()
 
 async function pickAndUpload(
   input: HTMLInputElement | undefined,
@@ -222,6 +226,10 @@ function onPickPackage() {
 
 function onPickCover() {
   pickAndUpload(coverInputRef.value, 'cover', 'coverUrl', uploadingCover)
+}
+
+function onPickQr() {
+  pickAndUpload(qrInputRef.value, 'qr', 'payQrUrl', uploadingQr)
 }
 
 function fmtTime(t: string | null | undefined) {
@@ -489,6 +497,32 @@ function fmtTime(t: string | null | undefined) {
               fit="cover"
               class="cover-preview"
               :preview-src-list="[productForm.coverUrl]"
+              preview-teleported
+            />
+          </div>
+        </el-form-item>
+        <el-form-item label="收款码">
+          <div class="upload-row">
+            <input
+              ref="qrInputRef"
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
+              class="hidden-input"
+              @change="onPickQr"
+            />
+            <el-input
+              v-model="productForm.payQrUrl"
+              placeholder="选择收款码图片上传，或粘贴已有图片 URL（桌面端激活时展示）"
+            />
+            <el-button :icon="Picture" :loading="uploadingQr" @click="qrInputRef?.click()">
+              选择收款码
+            </el-button>
+            <el-image
+              v-if="productForm.payQrUrl"
+              :src="productForm.payQrUrl"
+              fit="cover"
+              class="cover-preview"
+              :preview-src-list="[productForm.payQrUrl]"
               preview-teleported
             />
           </div>

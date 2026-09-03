@@ -3,7 +3,7 @@
 <mapper namespace="com.zaowuji.back.mapper.ProductMapper">
 
     <sql id="allColumns">
-        id, name, code, description, price, version, cover_url, download_url, status, sort, created_at, updated_at
+        id, name, code, description, price, version, cover_url, pay_qr_url, download_url, status, sort, created_at, updated_at
     </sql>
 
     <select id="selectOnSale" resultType="com.zaowuji.back.entity.Product">
@@ -33,8 +33,8 @@
 
     <insert id="insert" parameterType="com.zaowuji.back.entity.Product"
             useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO product (name, code, description, price, version, cover_url, download_url, status, sort)
-        VALUES (#{name}, #{code}, #{description}, #{price}, #{version}, #{coverUrl}, #{downloadUrl}, #{status}, #{sort})
+        INSERT INTO product (name, code, description, price, version, cover_url, pay_qr_url, download_url, status, sort)
+        VALUES (#{name}, #{code}, #{description}, #{price}, #{version}, #{coverUrl}, #{payQrUrl}, #{downloadUrl}, #{status}, #{sort})
     </insert>
 
     <update id="updateById" parameterType="com.zaowuji.back.entity.Product">
@@ -45,6 +45,7 @@
             price        = #{price},
             version      = #{version},
             cover_url    = #{coverUrl},
+            pay_qr_url   = #{payQrUrl},
             download_url = #{downloadUrl},
             status       = #{status},
             sort         = #{sort}
