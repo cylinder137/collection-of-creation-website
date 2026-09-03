@@ -33,6 +33,12 @@
 - `package.json` 新增入口 `npm run preview:quick`
 - 已本地验证 `--help` 与参数校验逻辑；对应 README「快速开始」同步补充用法
 
+## 2026-09-02 09:10 ｜ 前端部署工具与上线准备
+- 新增 `scripts/serve-dist.mjs`（零依赖静态服务器）：服务 dist/，MIME/缓存头（assets 长缓存、index.html no-cache）、SPA fallback、目录穿越防护，`--port`/`--host`（提交人：大林 / WorkBuddy）
+- 新增 `DEPLOY.md`：Cloudflare Tunnel 同源部署指南（cloudflared ingress 配置 `/api`→8080、其余→8081；服务器构建与常驻步骤；发版流程）
+- 构建验证：`vite build` 通过；serve-dist 本地实测 `/`（200+no-cache+正确标题）、assets（immutable 缓存）、fallback 均正常
+- 部署架构：域名 collectionofcreations.uk → Tunnel → /api 到 Spring 8080、其余到前端 8081，同源无跨域
+
 ## 2026-08-28 13:55 ｜ 前端反爬优化（JS 渲染方向）
 - 新增 `src/api/sign.ts`：请求签名（X-Timestamp/X-Nonce/X-Sign，cyrb53 演示级哈希）+ 响应载荷 XOR+Base64 解码（提交人：大林 / WorkBuddy）
 - `src/api/http.ts`：请求拦截器自动附签名头，响应拦截器支持 `{payload}` 编码数据自动解码
