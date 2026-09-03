@@ -12,6 +12,10 @@ import java.time.LocalDateTime;
 public class OrderVO {
     private Long id;
     private String orderNo;
+    /** 下单用户 ID（管理端列表返回） */
+    private Long userId;
+    /** 下单人联系方式（管理端列表返回，人工核验收款时核对用） */
+    private String contact;
     private Long productId;
     private String productName;
     /** 金额（元） */

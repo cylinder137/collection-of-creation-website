@@ -60,6 +60,7 @@ public class ActivationService {
 
         // 可选订单校验：订单存在、已支付（人工核验）、产品匹配，激活码绑定该订单
         Long orderId = null;
+        Long orderUserId = null;
         LocalDateTime orderPaidAt = null;
         if (orderNo != null && !orderNo.isBlank()) {
             Orders order = ordersMapper.selectByOrderNo(orderNo);
@@ -80,15 +81,17 @@ public class ActivationService {
                 throw new BizException("订单与所选产品不匹配");
             }
             orderId = order.getId();
+            orderUserId = order.getUserId();
             orderPaidAt = order.getPaidAt();
         }
 
-        // 登记设备（幂等）
+        // 登记设备（幂等；带订单时把设备归属到下单用户，便于后台用户维度追溯）
         Device device = deviceMapper.selectByMachineCode(hash);
         if (device == null) {
             device = new Device();
             device.setMachineCode(hash);
             device.setProductId(productId);
+            device.setUserId(orderUserId);
             deviceMapper.insert(device);
         }
 
@@ -98,6 +101,7 @@ public class ActivationService {
         license.setMachineCode(hash);
         license.setProductId(productId);
         license.setOrderId(orderId);
+        license.setUserId(orderUserId);
         license.setDeviceId(device.getId());
         license.setSign(RsaUtils.sign(RsaUtils.ensureKeyPair().getPrivate(),
                 hash + "-" + productId));

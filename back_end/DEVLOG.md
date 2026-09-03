@@ -45,3 +45,13 @@
 - 密钥经环境变量 `DEEPSEEK_API_KEY` 注入（application.yml `zaowuji.ai.*`），不落仓库、不进前端；含角色/长度/轮数校验、连接与读超时、异常兜底
 - `后端接口文档.md` 新增「10. AI 客服对话（DeepSeek 转发）」章节（请求/响应示例、校验规则、上游官方接口调用格式、配置项）
 - `mvn compile` 通过（提交人：Claw 助手 / cylinder137 授权）
+
+## 2026-09-03 ｜ 买家用户数据接口落地（user 表去微信化）
+- 微信认证登录方式已废除：新增 Flyway V2 迁移 `V2__user_dewechat.sql`——user 表删除 openid/unionid 列及其唯一索引，新增 `contact`（手机/邮箱）为 NOT NULL 唯一标识；存量 `contact_` 前缀占位数据无损还原；同步更新 `sql/schema.sql` 全量脚本
+- User 实体/Mapper 去微信化：selectByOpenid → selectByContact；新增 `selectAllWithStats`（用户列表含订单数/激活码数统计）
+- OrderService 下单建档改造：联系方式 trim 后按 user.contact 查找/建档（DuplicateKey 并发兜底幂等），替换原 openid 占位写入
+- 管理端订单列表带下单人联系方式：OrdersMapper 新增 `selectAllWithUser`（LEFT JOIN user，金额分→元），OrderVO 增 userId/contact 字段（C 端查询接口不回填，避免泄露他人联系方式）
+- 激活码签发绑定用户：ActivationService 携带订单号签发时，license/device 记录 userId（订单所属买家），打通「用户 → 激活码」追溯链
+- 新增管理端买家用户接口：UserController + UserService —— `GET /api/admin/users`（列表）、`GET /api/admin/users/{id}`（详情：基本信息 + 名下订单 + 名下激活码），走既有 /api/admin Bearer 鉴权
+- 接口文档更新：用户接口章节、订单 contact 语义、微信登录待办标记已废除
+- `mvn compile` 通过（提交人：Claw 助手 / cylinder137 授权）

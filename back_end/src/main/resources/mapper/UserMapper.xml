@@ -3,13 +3,13 @@
 <mapper namespace="com.zaowuji.back.mapper.UserMapper">
 
     <sql id="allColumns">
-        id, openid, unionid, nickname, phone, email, created_at, updated_at
+        id, contact, nickname, phone, email, created_at, updated_at
     </sql>
 
-    <select id="selectByOpenid" resultType="com.zaowuji.back.entity.User">
+    <select id="selectByContact" resultType="com.zaowuji.back.entity.User">
         SELECT <include refid="allColumns"/>
         FROM `user`
-        WHERE openid = #{openid}
+        WHERE contact = #{contact}
     </select>
 
     <select id="selectById" resultType="com.zaowuji.back.entity.User">
@@ -18,10 +18,24 @@
         WHERE id = #{id}
     </select>
 
+    <!-- 用户列表（新 → 旧），附带订单数 / 激活码数统计；phone 为密文不返回 -->
+    <select id="selectAllWithStats" resultType="com.zaowuji.back.vo.UserVO">
+        SELECT u.id,
+               u.contact,
+               u.nickname,
+               u.email,
+               u.created_at AS createdAt,
+               u.updated_at AS updatedAt,
+               (SELECT COUNT(*) FROM orders o WHERE o.user_id = u.id) AS orderCount,
+               (SELECT COUNT(*) FROM license l WHERE l.user_id = u.id) AS licenseCount
+        FROM `user` u
+        ORDER BY u.id DESC
+    </select>
+
     <insert id="insert" parameterType="com.zaowuji.back.entity.User"
             useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO `user` (openid, unionid, nickname, phone, email)
-        VALUES (#{openid}, #{unionid}, #{nickname}, #{phone}, #{email})
+        INSERT INTO `user` (contact, nickname, phone, email)
+        VALUES (#{contact}, #{nickname}, #{phone}, #{email})
     </insert>
 
 </mapper>

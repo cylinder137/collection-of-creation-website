@@ -73,3 +73,9 @@
 - 新增 `components/SliderCaptcha.vue`：拖动图片填空式人机验证（纯前端 canvas 自绘背景图 + 随机缺口，无第三方依赖/无外部图片请求），支持指针拖拽、换一张、失败抖动提示、容差判定
 - `HomeView.vue`：点击「下载安装包」先弹验证，通过后自动开始下载（临时 `<a>` 触发避免弹窗拦截）；同一浏览器会话仅首次需要验证
 - `npm run type-check` 通过（提交人：Claw 助手 / cylinder137 授权）
+## 2026-09-03 ｜ 管理后台用户管理对接（买家用户数据接口）
+- types：Order 增 userId/contact（下单人联系方式，管理端列表展示）；新增 UserInfo（买家用户）、UserDetail（用户详情）类型
+- api：adminApi 新增 `listUsers()`（GET /api/admin/users）、`userDetail(id)`（GET /api/admin/users/{id}）
+- AdminDashboardView：订单核验表格新增「下单人联系方式」列（人工核验收款时核对用）；新增「用户」标签页（联系方式建档列表 + 订单数/激活码数统计）；用户详情弹窗聚合展示基本信息 / 名下订单 / 名下激活码
+- 微信认证登录已废除，买家以下单联系方式为唯一标识（后端 user.contact），页面文案同步说明
+- `npm run type-check` 通过（提交人：Claw 助手 / cylinder137 授权）
