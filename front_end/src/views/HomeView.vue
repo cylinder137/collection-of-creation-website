@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { ElMessage } from 'element-plus'
 import { productApi } from '@/api'
 import type { Product } from '@/types'
+import SliderCaptcha from '@/components/SliderCaptcha.vue'
 
 /**
  * 造物集官网主页
@@ -86,9 +88,40 @@ function scrollToAnchor(selector: string) {
   document.querySelector(selector)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
+/** 下载前拼图人机验证（拖动图片填空），每个浏览器会话验证一次 */
+const captchaVisible = ref(false)
+const pendingProduct = ref<Product | null>(null)
+const captchaVerified = ref(false)
+
+function doDownload(product: Product) {
+  if (!product.downloadUrl) return
+  // 用临时 <a> 触发下载，避免被弹窗拦截
+  const a = document.createElement('a')
+  a.href = product.downloadUrl
+  a.target = '_blank'
+  a.rel = 'noopener'
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+}
+
 function download(product: Product) {
   if (!product.downloadUrl) return
-  window.open(product.downloadUrl, '_blank')
+  if (captchaVerified.value) {
+    doDownload(product)
+    return
+  }
+  pendingProduct.value = product
+  captchaVisible.value = true
+}
+
+function onCaptchaSuccess() {
+  captchaVerified.value = true
+  captchaVisible.value = false
+  const p = pendingProduct.value
+  pendingProduct.value = null
+  if (p) doDownload(p)
+  ElMessage.success('验证通过，已开始下载')
 }
 </script>
 
@@ -277,6 +310,19 @@ function download(product: Product) {
         </div>
       </div>
     </section>
+
+    <!-- 下载前拼图人机验证 -->
+    <el-dialog
+      v-model="captchaVisible"
+      title="拖动图片完成验证"
+      width="360px"
+      :close-on-click-modal="false"
+      align-center
+      @closed="pendingProduct = null"
+    >
+      <SliderCaptcha v-if="captchaVisible" @success="onCaptchaSuccess" />
+      <p style="margin: 10px 2px 0; font-size: 12px; color: #8a93a6">验证通过后将自动开始下载{{ pendingProduct ? `「${pendingProduct.name}」` : '' }}</p>
+    </el-dialog>
   </div>
 </template>
 
