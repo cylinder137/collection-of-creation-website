@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zaowuji.back.mapper.LicenseMapper">
+
+    <sql id="allColumns">
+        id, license_key, machine_code, product_id, order_id, user_id, device_id,
+        sign, license_type, status, issued_at, activated_at, expires_at, revoked_at,
+        created_at, updated_at
+    </sql>
+
+    <select id="selectByLicenseKey" resultType="com.zaowuji.back.entity.License">
+        SELECT <include refid="allColumns"/>
+        FROM license
+        WHERE license_key = #{licenseKey}
+    </select>
+
+        <select id="selectAll" resultType="com.zaowuji.back.entity.License">
+        SELECT <include refid="allColumns"/>
+        FROM license
+        ORDER BY id DESC
+    </select>
+
+<select id="selectById" resultType="com.zaowuji.back.entity.License">
+        SELECT <include refid="allColumns"/>
+        FROM license
+        WHERE id = #{id}
+    </select>
+
+    <select id="selectByUser" resultType="com.zaowuji.back.entity.License">
+        SELECT <include refid="allColumns"/>
+        FROM license
+        WHERE user_id = #{userId}
+        ORDER BY id DESC
+    </select>
+
+    <select id="selectByMachineCode" resultType="com.zaowuji.back.entity.License">
+        SELECT <include refid="allColumns"/>
+        FROM license
+        WHERE machine_code = #{machineCode}
+        ORDER BY id DESC
+    </select>
+
+    <insert id="insert" parameterType="com.zaowuji.back.entity.License"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO license (license_key, machine_code, product_id, order_id, user_id, device_id,
+                             sign, license_type, status, issued_at, activated_at, expires_at, revoked_at)
+        VALUES (#{licenseKey}, #{machineCode}, #{productId}, #{orderId}, #{userId}, #{deviceId},
+                #{sign}, #{licenseType}, #{status}, #{issuedAt}, #{activatedAt}, #{expiresAt}, #{revokedAt})
+    </insert>
+
+    <update id="updateStatus">
+        UPDATE license
+        SET status = #{status},
+            activated_at = COALESCE(#{activatedAt}, activated_at),
+            revoked_at = COALESCE(#{revokedAt}, revoked_at)
+        WHERE id = #{id}
+    </update>
+
+</mapper>

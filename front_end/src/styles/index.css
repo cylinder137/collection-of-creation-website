@@ -1,9 +1,45 @@
+/**
+ * 造物集官网 · 全局样式与设计令牌
+ *
+ * 设计基调：偏冷的蓝紫色品牌色 + 大量留白 + 轻投影卡片，
+ * 整体走「专业、克制、可信」的企业官网路线，不做营销味过重的视觉噪音。
+ */
 :root {
+  /* 品牌色 */
   --brand-color: #4f6ef7;
   --brand-color-dark: #3a55d8;
-  --text-main: #1f2329;
-  --text-secondary: #646a73;
-  --bg-page: #f5f6fa;
+  --brand-color-light: #eef1ff;
+  --brand-gradient: linear-gradient(135deg, #4f6ef7 0%, #7b5cf0 50%, #a855f7 100%);
+
+  /* 文字 */
+  --text-main: #1a1d24;
+  --text-secondary: #5f6672;
+  --text-tertiary: #9aa1ad;
+  --text-inverse: #ffffff;
+
+  /* 背景与描边 */
+  --bg-page: #ffffff;
+  --bg-subtle: #f7f8fc;
+  --bg-sunken: #f2f4fa;
+  --border-color: #e8eaf0;
+  --border-strong: #d8dce6;
+
+  /* 语义色 */
+  --success-color: #16a34a;
+  --warning-color: #d97706;
+  --danger-color: #dc2626;
+
+  /* 圆角与投影 */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --shadow-sm: 0 1px 3px rgba(26, 29, 36, 0.06);
+  --shadow-md: 0 6px 20px rgba(26, 29, 36, 0.07);
+  --shadow-lg: 0 18px 48px rgba(26, 29, 36, 0.1);
+
+  /* 布局 */
+  --container-width: 1160px;
+  --header-height: 68px;
 }
 
 * {
@@ -12,10 +48,14 @@
   box-sizing: border-box;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 html,
 body,
 #app {
-  height: 100%;
+  min-height: 100%;
 }
 
 body {
@@ -23,6 +63,8 @@ body {
   color: var(--text-main);
   background-color: var(--bg-page);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.6;
 }
 
 a {
@@ -30,21 +72,71 @@ a {
   color: inherit;
 }
 
-/* 通用页面容器 */
-.page-container {
-  max-width: 1200px;
+/* ---------- 通用布局容器 ---------- */
+
+.container {
+  width: 100%;
+  max-width: var(--container-width);
   margin: 0 auto;
-  padding: 24px 20px;
+  padding: 0 24px;
 }
 
-/* 区块标题 */
-.section-title {
-  font-size: 26px;
+.section {
+  padding: 96px 0;
+}
+
+.section--subtle {
+  background: var(--bg-subtle);
+}
+
+.section-head {
+  text-align: center;
+  margin-bottom: 56px;
+}
+
+.section-eyebrow {
+  display: inline-block;
+  font-size: 13px;
   font-weight: 600;
-  margin-bottom: 8px;
+  letter-spacing: 0.08em;
+  color: var(--brand-color);
+  background: var(--brand-color-light);
+  padding: 5px 14px;
+  border-radius: 999px;
+  margin-bottom: 18px;
 }
 
-.section-subtitle {
+.section-title {
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin-bottom: 14px;
+}
+
+.section-desc {
+  font-size: 16px;
   color: var(--text-secondary);
-  margin-bottom: 24px;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+/* ---------- Element Plus 本地化微调 ---------- */
+
+.el-button {
+  font-weight: 500;
+}
+
+.el-button--large {
+  --el-button-size: 46px;
+  padding: 0 28px;
+}
+
+@media (max-width: 768px) {
+  .section {
+    padding: 64px 0;
+  }
+
+  .section-title {
+    font-size: 26px;
+  }
 }

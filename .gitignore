@@ -37,3 +37,8 @@ tools/license_tool/keys/
 # Python
 __pycache__/
 *.pyc
+
+# 微信支付商户证书/密钥（敏感，严禁入库）
+back_end/cert/
+*.pem
+*.p12
