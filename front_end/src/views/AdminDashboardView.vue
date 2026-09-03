@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, type Ref } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
-import { Refresh, Plus, Checked, Download, Warning, Delete, Upload, Picture } from '@element-plus/icons-vue'
+import { Refresh, Plus, Checked, Download, Warning, Delete, Upload, Picture, CircleClose } from '@element-plus/icons-vue'
 import { adminApi } from '@/api'
 import type { LicenseRecord, Order, Product, ProductInput } from '@/types'
 import { LICENSE_STATUS, ORDER_STATUS } from '@/types'
@@ -59,6 +59,26 @@ async function reviewPass(order: Order) {
   }
   await adminApi.reviewPass(order.orderNo)
   ElMessage.success('已核验通过')
+  await loadAll()
+}
+
+/** 拒收订单（账单不符）：置为已取消；若已签发激活码则一并吊销 */
+async function reviewReject(order: Order) {
+  const hasActiveLicense = order.licenseStatus != null && order.licenseStatus !== 2
+  const tip = hasActiveLicense
+    ? `该订单已签发激活码（${LICENSE_STATUS[order.licenseStatus ?? -1]?.label ?? order.licenseStatus}），拒收后将一并吊销，立即失效！`
+    : '拒收后订单将置为已取消，用户无法再激活。'
+  try {
+    await ElMessageBox.confirm(
+      `确认拒收订单 ${order.orderNo}（${order.productName}，¥${order.amount}）？\n${tip}`,
+      '拒收订单',
+      { type: 'warning', confirmButtonText: '确认拒收', cancelButtonText: '取消' },
+    )
+  } catch {
+    return
+  }
+  await adminApi.rejectOrder(order.orderNo)
+  ElMessage.success('已拒收订单')
   await loadAll()
 }
 
@@ -292,7 +312,25 @@ function fmtTime(t: string | null | undefined) {
           <el-table-column label="下单时间" width="170">
             <template #default="{ row }">{{ fmtTime(row.createdAt) }}</template>
           </el-table-column>
-          <el-table-column label="操作" width="130" fixed="right">
+          <el-table-column label="联系人" width="120">
+            <template #default="{ row }">{{ row.contact || '—' }}</template>
+          </el-table-column>
+          <el-table-column label="支付时间" width="170">
+            <template #default="{ row }">{{ row.paidAt ? fmtTime(row.paidAt) : '—' }}</template>
+          </el-table-column>
+          <el-table-column label="激活码" width="120">
+            <template #default="{ row }">
+              <el-tag
+                v-if="row.licenseStatus != null"
+                :type="LICENSE_STATUS[row.licenseStatus]?.type ?? 'info'"
+                size="small"
+              >
+                {{ LICENSE_STATUS[row.licenseStatus]?.label ?? row.licenseStatus }}
+              </el-tag>
+              <span v-else class="cell-muted">—</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="220" fixed="right">
             <template #default="{ row }">
               <el-button
                 v-if="row.status === 0"
@@ -303,7 +341,17 @@ function fmtTime(t: string | null | undefined) {
               >
                 确认收款
               </el-button>
-              <span v-else class="cell-muted">—</span>
+              <el-button
+                v-if="row.status === 0 || row.status === 1 || row.status === 4"
+                type="danger"
+                size="small"
+                plain
+                :icon="CircleClose"
+                @click="reviewReject(row)"
+              >
+                拒收
+              </el-button>
+              <span v-if="row.status === 2 || row.status === 3" class="cell-muted">—</span>
             </template>
           </el-table-column>
           <template #empty>暂无订单</template>

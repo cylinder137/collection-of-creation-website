@@ -26,6 +26,13 @@
         WHERE id = #{id}
     </select>
 
+    <select id="selectByOrderId" resultType="com.zaowuji.back.entity.License">
+        SELECT <include refid="allColumns"/>
+        FROM license
+        WHERE order_id = #{orderId}
+        ORDER BY id DESC
+    </select>
+
     <select id="selectByUser" resultType="com.zaowuji.back.entity.License">
         SELECT <include refid="allColumns"/>
         FROM license

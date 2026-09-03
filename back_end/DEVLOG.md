@@ -53,3 +53,9 @@
 - 新增 GET /api/products/{id}/pay-qr（收款码图片流；相对路径回读文件 / 绝对 URL 302）
 - WebConfig 静态映射 /uploads/**；产品实体/VO/入参/XML 全链路加 payQrUrl
 - 文档：新建 docs/API接口文档.md（总接口文档，含 Base URL）；删除过时的 back_end/后端接口文档.md 与根 DEPLOYMENT.md（已备份 archives）
+
+## 2026-09-03 ｜ 订单拒收 + 订单核验信息增强 + verify 修复（提交人：Tinker / cylinder137 授权）
+- 新增 POST /api/admin/orders/{orderNo}/reject 拒收接口：账单不符 → 订单置为已取消(2)；若已签发激活码则一并吊销（license.status=2 + revoked_at），客户端在线核验立即失败；幂等（重复拒收直接返回）
+- OrderVO 增加核验辅助字段：contact（用户联系方式，user.nickname）与 licenseStatus（该订单激活码状态）；订单列表/详情/核验接口均返回
+- 修复 GET /api/license-key/verify 强制要求 sign/machineCode 导致客户端只传 code 必 500 的问题：改为 code 必填（查库吊销检查）+ sign/machineCode 选填（增强验签/绑定校验）
+- LicenseMapper 新增 selectByOrderId（拒收吊销用）

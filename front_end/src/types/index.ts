@@ -54,6 +54,10 @@ export interface Order {
   status: number
   paidAt: string | null
   createdAt: string
+  /** 用户联系方式（下单时填写，管理员核验用） */
+  contact: string | null
+  /** 该订单激活码状态（0未激活 1已激活 2已吊销 3已过期；未签发为 null） */
+  licenseStatus: number | null
 }
 
 /** 激活码签发记录（对齐后端 LicenseVO） */
@@ -106,7 +110,7 @@ export const ORDER_STATUS: Record<
 > = {
   0: { label: '待人工核验', type: 'warning' },
   1: { label: '已支付', type: 'success' },
-  2: { label: '已取消', type: 'info' },
+  2: { label: '已取消(拒收)', type: 'info' },
   3: { label: '已退款', type: 'danger' },
   4: { label: '已签发', type: 'primary' },
 }

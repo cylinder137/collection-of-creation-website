@@ -113,6 +113,12 @@ public class AdminController {
         return ApiResponse.ok(orderService.reviewPass(orderNo));
     }
 
+    /** 人工核验拒收：账单不符 → 订单置为已取消(2)；已签发的激活码一并吊销 */
+    @PostMapping("/orders/{orderNo}/reject")
+    public ApiResponse<OrderVO> reviewReject(@PathVariable String orderNo) {
+        return ApiResponse.ok(orderService.reviewReject(orderNo));
+    }
+
     // ==================== 激活码 ====================
 
     /** 激活码签发记录（新 → 旧） */

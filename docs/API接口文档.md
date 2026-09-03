@@ -94,7 +94,9 @@
 `GET /activations?machineCode=<64位hex>` → 该机器码全部激活码（含吊销状态）
 
 ### 10. 在线核验激活码（防吊销，客户端启动时建议调用）
-`GET /license-key/verify?code=<licenseKey>` → `{ "valid": true, "productId": 1, … }`（吊销/伪造返回 valid=false）
+`GET /license-key/verify?code=<licenseKey>`（可选附 `sign`=激活码签名做 RSA 验签、`machineCode`=本机机器码做绑定校验）
+→ `{ "valid": true, "productId": 1, "status": 1 }`；不存在/已吊销/验签失败/机器码不匹配时 `valid=false` + `reason`
+> code 必填即可获知吊销状态；sign / machineCode 为可选增强校验（三参齐传为完整核验）
 
 ## 四、管理端接口（需鉴权）
 

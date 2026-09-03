@@ -12,9 +12,9 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Map;
 
 /**
- * 激活码公钥 / 在线核验接口（桌面端接入用）：
- * - GET /api/license-key/public-key  拉取 RSA 公钥（验签用；也可内置到安装包离线验签）
- * - GET /api/license-key/verify      在线核验激活码（吊销检查 / 防伪）
+ * 激活码公钥 / 在线核验接口（客户端专用）
+ * - GET /api/license-key/public-key  获取 RSA 公钥（本地验签用；也可用于安装器离线验签）
+ * - GET /api/license-key/verify      在线核验激活码（吊销状态 / 验签 / 机器码绑定）
  */
 @RestController
 @RequestMapping("/api/license-key")
@@ -35,32 +35,31 @@ public class LicenseKeyController {
 
     /**
      * 在线核验激活码：
-     * 1) 格式合法（machineHash-productId，machineHash 与提供的机器码哈希一致）
-     * 2) 签名有效（RSA 公钥验签）
-     * 3) 服务端存在且未吊销
-     *
-     * @param code       激活码（license_key）
-     * @param sign       激活码签名（license.sign）
-     * @param machineCode 本机机器码（明文，用于哈希比对）
+     * - code 必填：查库（不存在 / 已吊销 → valid=false）
+     * - sign 选填：提供则做 RSA 验签
+     * - machineCode 选填：提供则校验激活码是否绑定本机
+     * <p>
+     * 客户端启动核验只传 code 即可获知吊销状态；完整核验可三参齐传。
      */
     @GetMapping("/verify")
     public ApiResponse<Map<String, Object>> verify(@RequestParam String code,
-                                                   @RequestParam String sign,
-                                                   @RequestParam String machineCode) {
-        String hash = SecurityUtils.sha256Hex(machineCode == null ? "" : machineCode);
-        String productPart = code == null ? "" : code.substring(code.lastIndexOf('-') + 1);
-        boolean formatOk = code != null && code.startsWith(hash + "-")
-                && productPart.matches("\\d+");
-        if (!formatOk) {
-            return ApiResponse.ok(Map.of("valid", false, "reason", "激活码与本机机器码不匹配"));
-        }
-        boolean signatureOk = RsaUtils.verify(RsaUtils.ensureKeyPair().getPublic(), code, sign);
-        if (!signatureOk) {
-            return ApiResponse.ok(Map.of("valid", false, "reason", "激活码签名无效"));
-        }
+                                                   @RequestParam(required = false) String sign,
+                                                   @RequestParam(required = false) String machineCode) {
         var license = licenseMapper.selectByLicenseKey(code);
         if (license == null) {
-            return ApiResponse.ok(Map.of("valid", false, "reason", "激活码不存在（请检查是否为本机签发）"));
+            return ApiResponse.ok(Map.of("valid", false, "reason", "激活码不存在，请检查是否为本系统签发"));
+        }
+        if (sign != null && !sign.isBlank()) {
+            boolean signatureOk = RsaUtils.verify(RsaUtils.ensureKeyPair().getPublic(), code, sign);
+            if (!signatureOk) {
+                return ApiResponse.ok(Map.of("valid", false, "reason", "激活码签名无效"));
+            }
+        }
+        if (machineCode != null && !machineCode.isBlank()) {
+            String hash = SecurityUtils.sha256Hex(machineCode);
+            if (!code.startsWith(hash + "-")) {
+                return ApiResponse.ok(Map.of("valid", false, "reason", "激活码与本机机器码不匹配"));
+            }
         }
         if (license.getStatus() != null && license.getStatus() == 2) {
             return ApiResponse.ok(Map.of("valid", false, "reason", "激活码已被吊销"));

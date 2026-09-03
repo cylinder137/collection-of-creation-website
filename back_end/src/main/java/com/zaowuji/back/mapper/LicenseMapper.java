@@ -16,6 +16,9 @@ public interface LicenseMapper {
 
     License selectById(@Param("id") Long id);
 
+    /** 按订单查激活记录（拒收订单时吊销用） */
+    List<License> selectByOrderId(@Param("orderId") Long orderId);
+
     List<License> selectAll();
 
     /** 按用户查激活记录 */

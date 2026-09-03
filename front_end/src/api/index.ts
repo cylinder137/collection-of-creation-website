@@ -50,6 +50,10 @@ export const adminApi = {
   reviewPass(orderNo: string) {
     return request<Order>({ url: `/admin/orders/${orderNo}/review-pass`, method: 'post' })
   },
+  /** 拒收订单（账单不符；已签发激活码会一并吊销） */
+  rejectOrder(orderNo: string) {
+    return request<Order>({ url: `/admin/orders/${orderNo}/reject`, method: 'post' })
+  },
 
   // ---------- 激活码 ----------
 
