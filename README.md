@@ -13,7 +13,9 @@
 3. 管理员在隐藏后台（`/admin`，全站无任何入口链接）人工核验收款
 4. 客户端提交机器码 → 后端 RSA 私钥签发激活码（绑定机器，换机失效）
 5. 安装与每次产品启动均做激活校验（本地验签 + 可选在线核验）
-客户端接入细节见 `docs/RSA与激活码接入文档.md`。
+
+> 📘 **思路转变背景**（为何从「网页端在线发售激活码」改为「桌面端闭环授权」）：见 `docs/激活码发售思路转变说明.md`
+> 🔌 **客户端接入细节**（RSA 密钥体系 / 机器码规范 / 接口调用）：见 `docs/RSA与激活码接入文档.md`
 
 #### 技术栈
 - **前端（front_end）**：Vue 3 + Vite + TypeScript + Element Plus + Pinia
@@ -62,6 +64,8 @@
 collection-of-creation-website/
 ├── front_end/          # 前端（Vue3 + Vite），开发日志见 front_end/DEVLOG.md
 ├── back_end/           # 后端（Spring Boot 3），开发日志见 back_end/DEVLOG.md
-├── docs/               # 接入文档（RSA 与激活码体系）
+├── docs/               # 设计/接入文档
+│   ├── 激活码发售思路转变说明.md   # 业务模式决策：网页发售 → 桌面端驱动激活
+│   └── RSA与激活码接入文档.md      # 客户端接入：RSA 密钥体系 / 机器码 / 接口调用
 └── README.md           # 项目说明与开发规范
 ```
