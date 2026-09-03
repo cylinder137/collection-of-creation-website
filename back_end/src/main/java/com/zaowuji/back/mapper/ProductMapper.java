@@ -24,6 +24,9 @@ public interface ProductMapper {
     /** 按编码查询产品 */
     Product selectByCode(@Param("code") String code);
 
+    /** 物理删除产品（调用前须确认无订单/激活码关联） */
+    int deleteById(@Param("id") Long id);
+
     /** 新增产品 */
     int insert(Product product);
 

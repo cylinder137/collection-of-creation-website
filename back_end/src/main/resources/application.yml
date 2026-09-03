@@ -16,6 +16,12 @@ spring:
     # 已存在非空库时允许基于现有库做 baseline（首次接入旧库用）
     baseline-on-migrate: true
 
+  servlet:
+    multipart:
+      # 管理后台上传（封面图/安装包）：安装包可能数百 MB，放宽限制
+      max-file-size: 2048MB
+      max-request-size: 2048MB
+
 mybatis:
   mapper-locations: classpath:mapper/*.xml
   type-aliases-package: com.zaowuji.back.entity
@@ -30,6 +36,8 @@ logging:
 zaowuji:
   # 管理员令牌 HMAC 签名密钥（生产环境务必通过环境变量 ZAOWUJI_ADMIN_SECRET 覆盖）
   admin-secret: ${ZAOWUJI_ADMIN_SECRET:zaowuji-dev-secret-2026}
+  # 管理后台上传文件存储目录（封面图/安装包；相对路径基于后端工作目录）
+  upload-dir: ${ZAOWUJI_UPLOAD_DIR:./uploads}
   ai:
     # AI 客服（DeepSeek）：密钥一律通过环境变量 DEEPSEEK_API_KEY 注入，禁止写入本文件/提交仓库
     # 本地示例（PowerShell）：$env:DEEPSEEK_API_KEY='sk-xxx'   （设置后需重启后端）

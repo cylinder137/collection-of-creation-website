@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, type Ref } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
-import { Refresh, Plus, Checked, Download, Warning } from '@element-plus/icons-vue'
+import { Refresh, Plus, Checked, Download, Warning, Delete, Upload, Picture } from '@element-plus/icons-vue'
 import { adminApi } from '@/api'
 import type { LicenseRecord, Order, Product, ProductInput } from '@/types'
 import { LICENSE_STATUS, ORDER_STATUS } from '@/types'
@@ -170,6 +170,58 @@ async function toggleStatus(p: Product) {
   await adminApi.setProductStatus(p.id, next)
   ElMessage.success(next === 1 ? '已上架' : '已下架')
   await loadAll()
+}
+
+/** 删除产品：有订单/激活码关联的产品后端会拒绝（提示改为下架） */
+async function removeProduct(p: Product) {
+  try {
+    await ElMessageBox.confirm(
+      `确定删除产品「${p.name}」吗？\n删除后不可恢复；已有订单/激活码关联时后端会拒绝删除（建议改为下架）。`,
+      '删除产品',
+      { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' },
+    )
+  } catch {
+    return
+  }
+  await adminApi.deleteProduct(p.id)
+  ElMessage.success('产品已删除')
+  await loadAll()
+}
+
+// ==================== 文件上传（安装包 / 封面图） ====================
+
+const uploadingPkg = ref(false)
+const uploadingCover = ref(false)
+const pkgInputRef = ref<HTMLInputElement>()
+const coverInputRef = ref<HTMLInputElement>()
+
+async function pickAndUpload(
+  input: HTMLInputElement | undefined,
+  kind: 'cover' | 'package',
+  field: 'coverUrl' | 'downloadUrl',
+  flag: Ref<boolean>,
+) {
+  const file = input?.files?.[0]
+  if (!file) return
+  flag.value = true
+  try {
+    const { url } = await adminApi.uploadFile(file, kind)
+    productForm[field] = url
+    ElMessage.success(kind === 'package' ? '安装包已上传' : '图片已上传，可直接保存')
+  } catch {
+    // 失败提示已由请求封装统一弹出
+  } finally {
+    flag.value = false
+    if (input) input.value = ''
+  }
+}
+
+function onPickPackage() {
+  pickAndUpload(pkgInputRef.value, 'package', 'downloadUrl', uploadingPkg)
+}
+
+function onPickCover() {
+  pickAndUpload(coverInputRef.value, 'cover', 'coverUrl', uploadingCover)
 }
 
 function fmtTime(t: string | null | undefined) {
@@ -342,7 +394,7 @@ function fmtTime(t: string | null | undefined) {
               <span v-else class="cell-muted">未配置</span>
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="150" fixed="right">
+          <el-table-column label="操作" width="210" fixed="right">
             <template #default="{ row }">
               <el-button size="small" @click="openEdit(row)">编辑</el-button>
               <el-button
@@ -352,6 +404,9 @@ function fmtTime(t: string | null | undefined) {
                 @click="toggleStatus(row)"
               >
                 {{ row.status === 1 ? '下架' : '上架' }}
+              </el-button>
+              <el-button size="small" type="danger" plain :icon="Delete" @click="removeProduct(row)">
+                删除
               </el-button>
             </template>
           </el-table-column>
@@ -368,7 +423,7 @@ function fmtTime(t: string | null | undefined) {
     <el-dialog
       v-model="productDialog"
       :title="editingId == null ? PRODUCT_DIALOG_TITLE.create : PRODUCT_DIALOG_TITLE.edit"
-      width="560px"
+      width="680px"
       destroy-on-close
     >
       <el-form ref="productFormRef" :model="productForm" :rules="productRules" label-width="92px">
@@ -394,14 +449,49 @@ function fmtTime(t: string | null | undefined) {
             style="width: 180px"
           />
         </el-form-item>
-        <el-form-item label="安装包直链">
-          <el-input
-            v-model="productForm.downloadUrl"
-            placeholder="exe 自解压安装包下载地址（https://…/coBrain-setup.exe）"
-          />
+        <el-form-item label="安装包">
+          <div class="upload-row">
+            <input
+              ref="pkgInputRef"
+              type="file"
+              accept=".exe,.msi,.zip,.7z"
+              class="hidden-input"
+              @change="onPickPackage"
+            />
+            <el-input
+              v-model="productForm.downloadUrl"
+              placeholder="选择本地安装包上传，或粘贴已有直链（https://…/setup.exe）"
+            />
+            <el-button :icon="Upload" :loading="uploadingPkg" @click="pkgInputRef?.click()">
+              选择安装包
+            </el-button>
+          </div>
         </el-form-item>
         <el-form-item label="封面图">
-          <el-input v-model="productForm.coverUrl" placeholder="https://…（可选）" />
+          <div class="upload-row">
+            <input
+              ref="coverInputRef"
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
+              class="hidden-input"
+              @change="onPickCover"
+            />
+            <el-input
+              v-model="productForm.coverUrl"
+              placeholder="选择本地图片上传，或粘贴已有图片 URL（可选）"
+            />
+            <el-button :icon="Picture" :loading="uploadingCover" @click="coverInputRef?.click()">
+              选择图片
+            </el-button>
+            <el-image
+              v-if="productForm.coverUrl"
+              :src="productForm.coverUrl"
+              fit="cover"
+              class="cover-preview"
+              :preview-src-list="[productForm.coverUrl]"
+              preview-teleported
+            />
+          </div>
         </el-form-item>
         <el-form-item label="简介">
           <el-input
@@ -519,5 +609,32 @@ function fmtTime(t: string | null | undefined) {
   display: flex;
   justify-content: flex-end;
   margin-top: 14px;
+}
+
+/* 上传行：输入框 + 选择按钮 + 封面预览 */
+.upload-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.upload-row .el-input {
+  flex: 1;
+  min-width: 240px;
+}
+
+.hidden-input {
+  display: none;
+}
+
+.cover-preview {
+  width: 44px;
+  height: 44px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  flex-shrink: 0;
+  cursor: pointer;
 }
 </style>

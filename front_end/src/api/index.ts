@@ -91,4 +91,26 @@ export const adminApi = {
       data: { status },
     })
   },
+
+  /** 删除产品（无订单/激活码关联时后端才允许物理删除） */
+  deleteProduct(id: number) {
+    return request<null>({ url: `/admin/products/${id}`, method: 'delete' })
+  },
+
+  /**
+   * 上传文件（封面图 cover / 安装包 package），返回 /uploads/... 相对 URL
+   * （走 /api/admin/**，自动携带 Bearer 令牌与反爬签名头）
+   */
+  uploadFile(file: File, kind: 'cover' | 'package') {
+    const fd = new FormData()
+    fd.append('file', file)
+    fd.append('kind', kind)
+    return request<{ url: string }>({
+      url: '/admin/upload',
+      method: 'post',
+      data: fd,
+      // 显式清掉默认 JSON 头：FormData 由浏览器自动生成 multipart boundary
+      headers: { 'Content-Type': undefined },
+    })
+  },
 }

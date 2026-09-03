@@ -42,3 +42,7 @@ __pycache__/
 back_end/cert/
 *.pem
 *.p12
+
+# ---- 运行时上传文件（封面图/安装包，不入库） ----
+uploads/
+back_end/uploads/

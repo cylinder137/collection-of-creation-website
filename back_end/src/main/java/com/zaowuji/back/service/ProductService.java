@@ -2,6 +2,8 @@ package com.zaowuji.back.service;
 
 import com.zaowuji.back.common.BizException;
 import com.zaowuji.back.entity.Product;
+import com.zaowuji.back.mapper.LicenseMapper;
+import com.zaowuji.back.mapper.OrdersMapper;
 import com.zaowuji.back.mapper.ProductMapper;
 import com.zaowuji.back.vo.ProductVO;
 import org.springframework.cache.annotation.CacheEvict;
@@ -18,9 +20,13 @@ import java.util.List;
 public class ProductService {
 
     private final ProductMapper productMapper;
+    private final LicenseMapper licenseMapper;
+    private final OrdersMapper ordersMapper;
 
-    public ProductService(ProductMapper productMapper) {
+    public ProductService(ProductMapper productMapper, LicenseMapper licenseMapper, OrdersMapper ordersMapper) {
         this.productMapper = productMapper;
+        this.licenseMapper = licenseMapper;
+        this.ordersMapper = ordersMapper;
     }
 
     /**
@@ -112,6 +118,27 @@ public class ProductService {
         }
         productMapper.updateStatus(id, status);
         return toVO(productMapper.selectById(id));
+    }
+
+    /**
+     * 删除产品（物理删除）。
+     * 保护：若该产品已存在订单/激活码记录则拒绝删除（防止历史记录悬空），建议改为下架。
+     */
+    @CacheEvict(cacheNames = "products", allEntries = true)
+    public void delete(Long id) {
+        Product exist = productMapper.selectById(id);
+        if (exist == null) {
+            throw new BizException(404, "产品不存在");
+        }
+        long licenseCount = licenseMapper.countByProductId(id);
+        if (licenseCount > 0) {
+            throw new BizException("该产品已有 " + licenseCount + " 条激活码记录，禁止删除（可改为下架）");
+        }
+        long orderCount = ordersMapper.countByProductId(id);
+        if (orderCount > 0) {
+            throw new BizException("该产品已有 " + orderCount + " 条订单记录，禁止删除（可改为下架）");
+        }
+        productMapper.deleteById(id);
     }
 
     private void validate(Product p) {

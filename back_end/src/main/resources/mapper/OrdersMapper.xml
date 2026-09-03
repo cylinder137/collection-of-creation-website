@@ -25,6 +25,10 @@
         ORDER BY id DESC
     </select>
 
+    <select id="countByProductId" resultType="int">
+        SELECT COUNT(*) FROM orders WHERE product_id = #{productId}
+    </select>
+
     <update id="updateStatus">
         UPDATE orders
         SET status = #{status},

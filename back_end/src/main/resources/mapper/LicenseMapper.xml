@@ -40,6 +40,10 @@
         ORDER BY id DESC
     </select>
 
+    <select id="countByProductId" resultType="int">
+        SELECT COUNT(*) FROM license WHERE product_id = #{productId}
+    </select>
+
     <insert id="insert" parameterType="com.zaowuji.back.entity.License"
             useGeneratedKeys="true" keyProperty="id">
         INSERT INTO license (license_key, machine_code, product_id, order_id, user_id, device_id,

@@ -20,6 +20,7 @@ import com.zaowuji.back.vo.ProductVO;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -163,6 +164,13 @@ public class AdminController {
                                                       @RequestBody Map<String, Integer> body) {
         Integer status = body == null ? null : body.get("status");
         return ApiResponse.ok(productService.updateStatus(id, status));
+    }
+
+    /** 删除产品（无订单/激活码关联时允许物理删除） */
+    @DeleteMapping("/products/{id}")
+    public ApiResponse<Void> deleteProduct(@PathVariable Long id) {
+        productService.delete(id);
+        return ApiResponse.ok();
     }
 
     private Product toEntity(ProductSaveParams params) {

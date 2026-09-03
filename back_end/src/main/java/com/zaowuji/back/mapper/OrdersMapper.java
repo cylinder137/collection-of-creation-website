@@ -18,6 +18,9 @@ public interface OrdersMapper {
 
     List<Orders> selectAll();
 
+    /** 按产品统计订单数量（删除产品前保护性检查） */
+    int countByProductId(@Param("productId") Long productId);
+
     int insert(Orders orders);
 
     int updateStatus(@Param("id") Long id, @Param("status") Integer status,

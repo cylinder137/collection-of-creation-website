@@ -6,9 +6,11 @@
  *   node scripts/serve-dist.mjs                # 默认 8081 端口
  *   node scripts/serve-dist.mjs --port 8081
  *   node scripts/serve-dist.mjs --host         # 监听 0.0.0.0（Tunnel/局域网访问需要）
+ *   node scripts/serve-dist.mjs --uploads <目录>  # 额外静态目录，映射 /uploads/**（默认 ../back_end/uploads）
  *
  * 说明：
  * - 服务 dist/ 目录（先执行 npm run build）
+ * - /uploads/** 从上传目录读取（管理后台上传的封面图/安装包），不存在则 404（不做 SPA fallback）
  * - hash 路由（/#/...）天然适配静态服务；另带 index.html fallback 兜底
  * - assets/ 带内容哈希，长缓存；index.html 不缓存
  */
@@ -20,16 +22,18 @@ import { fileURLToPath } from 'node:url'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const root = path.resolve(__dirname, '..')
 const distDir = path.join(root, 'dist')
+const defaultUploads = path.resolve(root, '..', 'back_end', 'uploads')
 
 // ---------- 参数 ----------
-const opt = { port: 8081, host: false }
+const opt = { port: 8081, host: false, uploads: defaultUploads }
 const argv = process.argv.slice(2)
 for (let i = 0; i < argv.length; i++) {
   const a = argv[i]
   if (a === '--port') opt.port = Number(argv[++i]) || 8081
   else if (a === '--host') opt.host = true
+  else if (a === '--uploads') opt.uploads = path.resolve(argv[++i] || defaultUploads)
   else if (a === '-h' || a === '--help') {
-    console.log('node scripts/serve-dist.mjs [--port 8081] [--host]')
+    console.log('node scripts/serve-dist.mjs [--port 8081] [--host] [--uploads <目录>]')
     process.exit(0)
   }
 }
@@ -52,6 +56,11 @@ const MIME = {
   '.ttf': 'font/ttf',
   '.txt': 'text/plain; charset=utf-8',
   '.map': 'application/json',
+  // 安装包（浏览器按附件下载）
+  '.exe': 'application/octet-stream',
+  '.msi': 'application/octet-stream',
+  '.zip': 'application/zip',
+  '.7z': 'application/x-7z-compressed',
 }
 
 const color = {
@@ -71,44 +80,63 @@ async function fileExists(p) {
   }
 }
 
-const server = createServer(async (req, res) => {
-  try {
-    // 仅支持 GET/HEAD
-    const urlPath = decodeURIComponent(new URL(req.url, 'http://x').pathname)
-    // 防目录穿越
-    const safePath = path
-      .normalize(urlPath)
-      .replace(/^([/\\])+/, '')
-      .replace(/^(\.\.[/\\])+/, '')
-    let filePath = path.join(distDir, safePath)
-    if (!filePath.startsWith(distDir)) {
-      res.writeHead(403).end('Forbidden')
-      return
-    }
+/** 安全地把 baseDir 下的 urlPath 文件发给客户端；allowFallback 时文件缺失回退 baseDir/index.html */
+async function serveFile(req, res, baseDir, urlPath, allowFallback) {
+  const safePath = path
+    .normalize(urlPath)
+    .replace(/^([/\\])+/, '')
+    .replace(/^(\.\.[/\\])+/, '')
+  let filePath = path.join(baseDir, safePath)
+  if (!filePath.startsWith(baseDir)) {
+    res.writeHead(403).end('Forbidden')
+    return
+  }
 
-    if (!(await fileExists(filePath))) {
+  if (!(await fileExists(filePath))) {
+    if (allowFallback) {
       // SPA fallback：非资源请求回退到 index.html（hash 路由下主要起兜底作用）
-      filePath = path.join(distDir, 'index.html')
+      filePath = path.join(baseDir, 'index.html')
       if (!(await fileExists(filePath))) {
         res.writeHead(404).end('Not Found - dist 不存在，请先 npm run build')
         return
       }
+    } else {
+      res.writeHead(404).end('Not Found')
+      return
+    }
+  }
+
+  const ext = path.extname(filePath).toLowerCase()
+  const isIndex = filePath.endsWith('index.html')
+  const isHashedAsset = filePath.includes(`${path.sep}assets${path.sep}`)
+  const isUpload = filePath.startsWith(opt.uploads)
+  res.writeHead(200, {
+    'Content-Type': MIME[ext] || 'application/octet-stream',
+    // 哈希产物长缓存；index.html 不缓存，保证发版即生效；上传文件短缓存便于更新后立即可见
+    'Cache-Control': isIndex
+      ? 'no-cache'
+      : isHashedAsset
+        ? 'public, max-age=31536000, immutable'
+        : isUpload
+          ? 'public, max-age=300'
+          : 'public, max-age=3600',
+  })
+  const body = await readFile(filePath)
+  res.end(req.method === 'HEAD' ? undefined : body)
+}
+
+const server = createServer(async (req, res) => {
+  try {
+    // 仅支持 GET/HEAD
+    const urlPath = decodeURIComponent(new URL(req.url, 'http://x').pathname)
+
+    // /uploads/** -> 上传目录（封面图/安装包），不做 SPA fallback
+    if (urlPath === '/uploads' || urlPath.startsWith('/uploads/')) {
+      await serveFile(req, res, opt.uploads, urlPath.slice('/uploads'.length), false)
+      return
     }
 
-    const ext = path.extname(filePath).toLowerCase()
-    const isIndex = filePath.endsWith('index.html')
-    const isHashedAsset = filePath.includes(`${path.sep}assets${path.sep}`)
-    res.writeHead(200, {
-      'Content-Type': MIME[ext] || 'application/octet-stream',
-      // 哈希产物长缓存；index.html 不缓存，保证发版即生效
-      'Cache-Control': isIndex
-        ? 'no-cache'
-        : isHashedAsset
-          ? 'public, max-age=31536000, immutable'
-          : 'public, max-age=3600',
-    })
-    const body = await readFile(filePath)
-    res.end(req.method === 'HEAD' ? undefined : body)
+    await serveFile(req, res, distDir, urlPath, true)
   } catch (e) {
     res.writeHead(500).end('Internal Server Error')
     console.error(color.red(`[serve-dist] ${req.url} -> ${e.message}`))
@@ -117,5 +145,6 @@ const server = createServer(async (req, res) => {
 
 server.listen(opt.port, opt.host ? '0.0.0.0' : '127.0.0.1', () => {
   log(`目录：${color.gray(distDir)}`)
+  log(`上传：${color.gray(opt.uploads)} (/uploads/**)`)
   log(`监听：${color.green(`http://${opt.host ? '0.0.0.0' : '127.0.0.1'}:${opt.port}`)}（Ctrl+C 停止）`)
 })

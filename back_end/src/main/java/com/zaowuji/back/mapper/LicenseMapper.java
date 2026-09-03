@@ -24,6 +24,9 @@ public interface LicenseMapper {
     /** 按机器码哈希查激活记录 */
     List<License> selectByMachineCode(@Param("machineCode") String machineCode);
 
+    /** 按产品统计激活码数量（删除产品前保护性检查） */
+    int countByProductId(@Param("productId") Long productId);
+
     int insert(License license);
 
     /** 更新激活码状态（吊销/激活等；revokedAt 可为 null） */
