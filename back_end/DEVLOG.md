@@ -25,8 +25,8 @@
 - 待办：生成 MyBatis 实体类/Mapper，编写产品 / 订单 / 激活码业务接口（提交人：小麦能磨面 / MaiMai11185）
 
 
-## 2026-08-28 08:52 �� ��֧���Ը��£�GitHub Flow��
-- ��Ŀ�淶���£�ÿ�ο����� main �½� feature/xxx���ϲ��󵱳�ɾ��֧���ύ�ˣ�Claw ���� / cylinder137 ��Ȩ��
+## 2026-08-28 08:52 �� ��֧���Ը��£�GitHub Flow��
+- ��Ŀ�淶���£�ÿ�ο����� main �½� feature/xxx���ϲ��󵱳�ɾ��֧���ύ�ˣ�Claw ���� / cylinder137 ��Ȩ��
 
 ## 2026-08-28 11:30 ｜ 数据库结构安全加固（v2）+ Flyway 版本化（提交人：cylinder137 / Tinker）
 - 安全审查后优化 schema.sql：① payment.order_no 加 UNIQUE（防微信重复回调）② 金额/状态加 CHECK 约束 ③ machine_code 改为只存 SHA-256 哈希（64 字符，不存明文硬件指纹）④ user.phone 与 payment.notify_raw 改为加密存储（个保法合规）⑤ 删除 device.status 冗余字段（激活状态以 license 表为准）⑥ 排序规则升级 utf8mb4_0900_ai_ci ⑦ license 新增 license_type（永久/订阅）⑧ 新增 idx_orders_status 索引
@@ -39,3 +39,9 @@
 - ProductService 增加管理端 create/update/updateStatus（编码唯一校验 + @CacheEvict 全量失效，官网 5 分钟缓存写后立即生效）；ProductMapper/LicenseMapper 补 selectAll/insert/updateById/updateStatus 及对应 XML
 - 配套文档：docs/RSA与激活码接入文档.md（面向 coBrain 客户端：RSA 密钥体系 / 机器码规范 / 下单-核验-激活-验签全流程 / Python·C# 验签示例 / 错误码表）
 - mvn compile 通过（提交人：靠谱 / WorkBuddy）
+
+## 2026-09-03 ｜ AI 客服代理接口（DeepSeek）
+- 新增 `POST /api/ai/chat`（AiChatController + AiChatService + dto ChatMessage/ChatRequest）：接收 `{messages:[{role,content}]}`，服务端拼接基础客服提示词「小造」后按 DeepSeek 官方接口格式（POST /chat/completions，model=deepseek-chat，OpenAI 兼容）转发，返回 `{reply}`
+- 密钥经环境变量 `DEEPSEEK_API_KEY` 注入（application.yml `zaowuji.ai.*`），不落仓库、不进前端；含角色/长度/轮数校验、连接与读超时、异常兜底
+- `后端接口文档.md` 新增「10. AI 客服对话（DeepSeek 转发）」章节（请求/响应示例、校验规则、上游官方接口调用格式、配置项）
+- `mvn compile` 通过（提交人：Claw 助手 / cylinder137 授权）
