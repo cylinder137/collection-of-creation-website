@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from 'vue'
+import AiChatWidget from '../components/AiChatWidget.vue'
 
 /**
  * 官网布局：顶栏 + 内容 + 页脚
@@ -124,6 +125,9 @@ function onScroll() {
         <span class="footer-icp">辽ICP备 0000000 号</span>
       </div>
     </footer>
+
+    <!-- 官网悬浮 AI 客服（小造 · DeepSeek） -->
+    <AiChatWidget />
   </div>
 </template>
 
