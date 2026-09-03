@@ -4,6 +4,7 @@ import { ElMessage } from 'element-plus'
 import { productApi } from '@/api'
 import type { Product } from '@/types'
 import SliderCaptcha from '@/components/SliderCaptcha.vue'
+import FlowButton from '@/components/FlowButton.vue'
 
 /**
  * 造物集官网主页
@@ -142,10 +143,7 @@ function onCaptchaSuccess() {
             装好之后它只安静地待在后台，把舞台留给你。
           </p>
           <div class="hero-actions">
-            <el-button type="primary" size="large" round @click="scrollToAnchor('#products')">
-              <el-icon class="mr-1"><Download /></el-icon>
-              下载客户端
-            </el-button>
+            <FlowButton text="下载客户端" @click="scrollToAnchor('#products')" />
             <el-button size="large" round @click="scrollToAnchor('#guide')">
               了解激活流程
             </el-button>
@@ -221,15 +219,12 @@ function onCaptchaSuccess() {
               <span class="product-price-note">买断制 · 一单一机</span>
             </div>
 
-            <el-button
+            <FlowButton
               class="product-download"
-              type="primary"
+              :text="product.downloadUrl ? '下载安装包' : '下载即将开放'"
               :disabled="!product.downloadUrl"
               @click="download(product)"
-            >
-              <el-icon class="mr-1"><Download /></el-icon>
-              {{ product.downloadUrl ? '下载安装包' : '下载即将开放' }}
-            </el-button>
+            />
           </article>
         </div>
 
