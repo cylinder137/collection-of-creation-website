@@ -54,6 +54,19 @@ front_end/
 后端统一返回 `{ code, data, message }`（`code=0/200` 为成功），见 `src/api/http.ts` 拦截器。
 开发环境接口前缀 `/api` 由 Vite 代理转发到 `http://localhost:8080`（Spring Boot 默认端口）。
 
+## 反爬设计（前端侧）
+
+页面为 Vue SPA，数据完全由 JS 渲染（HTML 中不含业务数据），并在此之上加了三道"抬门槛"措施：
+
+1. **请求签名**（`src/api/sign.ts`）：每个接口请求带 `X-Timestamp` / `X-Nonce` / `X-Sign`，
+   `X-Sign = cyrb53(METHOD|url|timestamp|nonce|secret)`。裸爬虫直接抓接口无法通过校验。
+2. **编码传输**：敏感接口后端可返回 `{ "payload": "<XOR+Base64>" }`，前端拦截器自动解码（`decodePayload`）。
+3. **环境检测**（`src/utils/antiCrawler.ts`）：识别 `navigator.webdriver`、无头 UA、异常指纹组合，
+   生产环境命中即拒绝挂载应用（开发环境自动放行）；构建时剔除 console/debugger。
+
+> 需要后端配合：校验签名与时间戳（±5 分钟防重放）、敏感数据按需编码返回、网关层限流。
+> 签名哈希为演示级（cyrb53），正式上线建议换 HMAC-SHA256 并由后端验签。
+
 ## 待办
 
 - [ ] 后端接口联调（产品 / 订单 / 激活码）

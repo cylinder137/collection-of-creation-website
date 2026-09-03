@@ -33,6 +33,13 @@
 - `package.json` 新增入口 `npm run preview:quick`
 - 已本地验证 `--help` 与参数校验逻辑；对应 README「快速开始」同步补充用法
 
+## 2026-08-28 13:55 ｜ 前端反爬优化（JS 渲染方向）
+- 新增 `src/api/sign.ts`：请求签名（X-Timestamp/X-Nonce/X-Sign，cyrb53 演示级哈希）+ 响应载荷 XOR+Base64 解码（提交人：大林 / WorkBuddy）
+- `src/api/http.ts`：请求拦截器自动附签名头，响应拦截器支持 `{payload}` 编码数据自动解码
+- 新增 `src/utils/antiCrawler.ts`：webdriver/无头 UA/指纹组合检测，生产环境命中即拒绝挂载；`main.ts` 挂载前调用
+- `vite.config.ts`：生产构建剔除 console.log/debug 与 debugger 语句
+- 后端配合点（见 README「反爬设计」）：校验签名与时间戳防重放、敏感接口可返回编码 payload、网关限流
+
 ## 2026-09-02 ｜ 前端整体重构：官网纯下载模式 + 隐藏式管理后台
 - **业务模式切换**：官网不再发售激活码，仅提供产品展示与 exe 自解压安装包下载；激活流程全部移到桌面客户端（安装程序提权采集机器码 → 调后端签发），前端删除浏览器端机器码采集（utils/device.ts）
 - **页面重构**：重写 HomeView（Hero/产品下载/激活流程引导/FAQ，全新文案）与 OfficialLayout；删除 ProductsView / PurchaseView / ActivationView / 旧 AdminView / DefaultLayout / ProductCard
@@ -40,4 +47,10 @@
 - **无状态鉴权**：登录换取 HMAC 令牌缓存 localStorage；axios 拦截器对 /admin/** 请求自动附 Authorization: Bearer；401 自动清令牌跳登录；后端每次请求验签 + 回库核验（提交人：靠谱 / WorkBuddy）
 - `npm run build`（含 vue-tsc 类型检查）通过
 
+## 2026-09-03 ｜ 合并 Dalin08 反爬分支（JS 渲染方向）至重构后 main
+- 将 `feature/frontend-anti-crawler`（PR #10）合并进重构后的 main，保留 main 全部新业务逻辑（纯下载官网 / 隐藏管理后台 / 无状态鉴权），同时接入反爬 JS 渲染体系（提交人：Claw 助手 / cylinder137 授权）
+- `http.ts` 冲突解决：admin 令牌拦截器与反爬签名拦截器并存（两个请求拦截器叠加），响应拦截器在解包 `{code,data,message}` 前先做 `{payload}` XOR+Base64 解码；401/403 处理保持 main 逻辑
+- 新增 `src/api/sign.ts`（请求签名 + 载荷解码）与 `src/utils/antiCrawler.ts`（无头/自动化环境检测，生产环境命中拒绝挂载）；`main.ts` 挂载前调用 `assertHumanEnv()`
+- `vite.config.ts` 保留 main 全部配置，叠加生产构建剔除 console.log/debug 与 debugger
+- 合并后 `npm run type-check` 与 `npm run build` 验证通过
 
