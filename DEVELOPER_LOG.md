@@ -107,6 +107,14 @@
 
 ---
 
+## 2026-09-03 打卡（提交人：Claw 助手 / WorkBuddy，经 cylinder137 授权）
+
+- **09:30 开工打卡**：同步 main 至 f211c4d（后端 v0.1 全量合入 + 前端重构 + 管理后台/订单/激活码流程 + 部署与接口文档），复核本地与远程分支状态，开始今日开发
+- **状态确认**：远程待合并前端分支（大林：frontend-login / frontend-anti-crawler / frontend-deploy）与本地遗留 feature/frontend-onboarding（入驻日志核验 103d7b9）待处理
+- 按团队规范（GitHub Flow）：本次打卡改动在 feature/dev-checkin-20260903-workbuddy 分支提交，合并 main 后当场删除分支
+
+---
+
 ## 重要变更记录
 
 ### 2026-09-02/03 ｜ 业务模式思路转变：网页发售激活码 → 桌面端驱动激活
