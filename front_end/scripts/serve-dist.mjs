@@ -15,7 +15,9 @@
  * - assets/ 带内容哈希，长缓存；index.html 不缓存
  */
 import { createServer } from 'node:http'
-import { readFile, stat } from 'node:fs/promises'
+import { request as httpRequest } from 'node:http'
+import { createReadStream } from 'node:fs'
+import { stat } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -25,15 +27,16 @@ const distDir = path.join(root, 'dist')
 const defaultUploads = path.resolve(root, '..', 'back_end', 'uploads')
 
 // ---------- 参数 ----------
-const opt = { port: 8081, host: false, uploads: defaultUploads }
+const opt = { port: 8081, host: false, uploads: defaultUploads, apiProxy: null }
 const argv = process.argv.slice(2)
 for (let i = 0; i < argv.length; i++) {
   const a = argv[i]
   if (a === '--port') opt.port = Number(argv[++i]) || 8081
   else if (a === '--host') opt.host = true
   else if (a === '--uploads') opt.uploads = path.resolve(argv[++i] || defaultUploads)
+  else if (a === '--api-proxy') opt.apiProxy = argv[++i] || 'http://127.0.0.1:8080'
   else if (a === '-h' || a === '--help') {
-    console.log('node scripts/serve-dist.mjs [--port 8081] [--host] [--uploads <目录>]')
+    console.log('node scripts/serve-dist.mjs [--port 8081] [--host] [--uploads <目录>] [--api-proxy <后端地址>]')
     process.exit(0)
   }
 }
@@ -71,16 +74,8 @@ const color = {
 }
 const log = (s) => console.log(`${color.cyan('[serve-dist]')} ${s}`)
 
-async function fileExists(p) {
-  try {
-    const s = await stat(p)
-    return s.isFile()
-  } catch {
-    return false
-  }
-}
-
-/** 安全地把 baseDir 下的 urlPath 文件发给客户端；allowFallback 时文件缺失回退 baseDir/index.html */
+/** 安全地把 baseDir 下的 urlPath 文件发给客户端；allowFallback 时文件缺失回退 baseDir/index.html
+ *  流式发送 + 支持 Range（断点续传/安装包大文件友好） */
 async function serveFile(req, res, baseDir, urlPath, allowFallback) {
   const safePath = path
     .normalize(urlPath)
@@ -92,11 +87,16 @@ async function serveFile(req, res, baseDir, urlPath, allowFallback) {
     return
   }
 
-  if (!(await fileExists(filePath))) {
+  let st
+  try {
+    st = await stat(filePath)
+  } catch {
     if (allowFallback) {
       // SPA fallback：非资源请求回退到 index.html（hash 路由下主要起兜底作用）
       filePath = path.join(baseDir, 'index.html')
-      if (!(await fileExists(filePath))) {
+      try {
+        st = await stat(filePath)
+      } catch {
         res.writeHead(404).end('Not Found - dist 不存在，请先 npm run build')
         return
       }
@@ -110,7 +110,7 @@ async function serveFile(req, res, baseDir, urlPath, allowFallback) {
   const isIndex = filePath.endsWith('index.html')
   const isHashedAsset = filePath.includes(`${path.sep}assets${path.sep}`)
   const isUpload = filePath.startsWith(opt.uploads)
-  res.writeHead(200, {
+  const headers = {
     'Content-Type': MIME[ext] || 'application/octet-stream',
     // 哈希产物长缓存；index.html 不缓存，保证发版即生效；上传文件短缓存便于更新后立即可见
     'Cache-Control': isIndex
@@ -120,15 +120,91 @@ async function serveFile(req, res, baseDir, urlPath, allowFallback) {
         : isUpload
           ? 'public, max-age=300'
           : 'public, max-age=3600',
+    'Accept-Ranges': 'bytes',
+  }
+
+  // Range 支持（单段）
+  const total = st.size
+  let start = 0
+  let end = total - 1
+  let statusCode = 200
+  const range = req.headers.range
+  if (range) {
+    const m = /bytes=(\d*)-(\d*)/.exec(range)
+    if (m && (m[1] || m[2])) {
+      if (m[1]) start = parseInt(m[1], 10)
+      if (m[2]) end = Math.min(parseInt(m[2], 10), total - 1)
+      if (start > end || start >= total) {
+        res.writeHead(416, { 'Content-Range': `bytes */${total}` }).end()
+        return
+      }
+      statusCode = 206
+      headers['Content-Range'] = `bytes ${start}-${end}/${total}`
+      headers['Content-Length'] = end - start + 1
+    }
+  } else {
+    headers['Content-Length'] = total
+  }
+
+  res.writeHead(statusCode, headers)
+  if (req.method === 'HEAD') {
+    res.end()
+    return
+  }
+  createReadStream(filePath, { start, end }).pipe(res)
+}
+
+/**
+ * /api/** 反向代理到后端（流式转发，支持 POST 大文件上传；供本地管理实例使用）
+ * 例：node scripts/serve-dist.mjs --port 8082 --api-proxy http://127.0.0.1:8080
+ */
+function proxyApi(req, res) {
+  let target
+  try {
+    target = new URL(opt.apiProxy)
+  } catch {
+    res.writeHead(500).end('Bad api-proxy config')
+    return
+  }
+  const headers = { ...req.headers, host: target.host }
+  // 去掉 hop-by-hop 头，避免转发歧义
+  for (const h of ['connection', 'keep-alive', 'transfer-encoding', 'upgrade']) {
+    delete headers[h]
+  }
+  const preq = httpRequest(
+    {
+      hostname: target.hostname,
+      port: target.port || (target.protocol === 'https:' ? 443 : 80),
+      path: req.url, // 保留原始 path + query
+      method: req.method,
+      headers,
+    },
+    (pres) => {
+      res.writeHead(pres.statusCode, pres.headers)
+      pres.pipe(res)
+    },
+  )
+  preq.on('error', (e) => {
+    res.writeHead(502).end('Bad Gateway: ' + e.message)
   })
-  const body = await readFile(filePath)
-  res.end(req.method === 'HEAD' ? undefined : body)
+  req.pipe(preq)
 }
 
 const server = createServer(async (req, res) => {
   try {
-    // 仅支持 GET/HEAD
-    const urlPath = decodeURIComponent(new URL(req.url, 'http://x').pathname)
+    // /api/** 代理到后端（存在 --api-proxy 时）
+    const rawUrl = new URL(req.url, 'http://x')
+    const urlPath = decodeURIComponent(rawUrl.pathname)
+    if (opt.apiProxy && (urlPath === '/api' || urlPath.startsWith('/api/'))) {
+      proxyApi(req, res)
+      return
+    }
+
+    // 静态资源仅支持 GET/HEAD
+    if (req.method !== 'GET' && req.method !== 'HEAD') {
+      res.writeHead(405, { Allow: 'GET, HEAD' }).end('Method Not Allowed')
+      return
+    }
 
     // /uploads/** -> 上传目录（封面图/安装包），不做 SPA fallback
     if (urlPath === '/uploads' || urlPath.startsWith('/uploads/')) {
@@ -147,4 +223,7 @@ server.listen(opt.port, opt.host ? '0.0.0.0' : '127.0.0.1', () => {
   log(`目录：${color.gray(distDir)}`)
   log(`上传：${color.gray(opt.uploads)} (/uploads/**)`)
   log(`监听：${color.green(`http://${opt.host ? '0.0.0.0' : '127.0.0.1'}:${opt.port}`)}（Ctrl+C 停止）`)
+  if (opt.apiProxy) {
+    log(`API 代理：${color.gray(opt.apiProxy)} (/api/**)`)
+  }
 })

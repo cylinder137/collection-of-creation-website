@@ -59,3 +59,10 @@
 - OrderVO 增加核验辅助字段：contact（用户联系方式，user.nickname）与 licenseStatus（该订单激活码状态）；订单列表/详情/核验接口均返回
 - 修复 GET /api/license-key/verify 强制要求 sign/machineCode 导致客户端只传 code 必 500 的问题：改为 code 必填（查库吊销检查）+ sign/machineCode 选填（增强验签/绑定校验）
 - LicenseMapper 新增 selectByOrderId（拒收吊销用）
+
+## 2026-09-03 ｜ serve-dist 增强：/api 代理 + 流式 + Range（提交人：Tinker / cylinder137 授权）
+- serve-dist.mjs 新增 --api-proxy <后端> 参数：/api/** 反向代理（流式转发，支持 POST 大文件），用于本地管理实例
+- 静态文件改流式发送（createReadStream）+ 支持 Range 断点续传（206），大安装包不再整读内存
+- 新增本地管理实例 8082（仅 127.0.0.1，不上公网）：http://localhost:8082/admin，大文件上传走内网绕开 Cloudflare 公网限制（GFW 对境内→CF 边缘 >3MB 上传 RST，实测 10MB+ 必断、下载 120MB 正常）
+- 原因：管理员传 692MB coBrain.zip 到公网 502 = GFW 重置，非 CF 免费版 100MB 限制（HTTP 413 未出现）
+- 启动脚本 start-zaowuji.ps1 增加 3.5 本地管理实例段 + 状态汇总
