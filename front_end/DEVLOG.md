@@ -54,3 +54,10 @@
 - `vite.config.ts` ���� main ȫ�����ã��������������޳� console.log/debug �� debugger
 - �ϲ��� `npm run type-check` �� `npm run build` ��֤ͨ��
 
+
+
+## 2026-09-03 ｜ AI 客服对话组件（官网悬浮窗）
+- 新增 `components/AiChatWidget.vue`：官网右下角悬浮 AI 客服「小造」——聊天气泡 / 输入中动画 / 快捷提问 / Enter 发送 / 移动端适配，随 OfficialLayout 挂在全部官网页面（管理后台不展示）
+- 新增 `api/ai.ts`：POST /api/ai/chat 发送多轮消息（`{role, content}`，DeepSeek 官方兼容结构）；API Key 不落前端，由后端代理统一调用 DeepSeek
+- 顺带将本文件历史混入的 GBK 编码行统一转 UTF-8（内容不变）
+- `npm run type-check` 通过（提交人：Claw 助手 / cylinder137 授权）
