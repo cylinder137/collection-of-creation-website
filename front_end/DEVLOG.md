@@ -67,3 +67,9 @@
 - 新增 `api/ai.ts`：POST /api/ai/chat 发送多轮消息（`{role, content}`，DeepSeek 官方兼容结构）；API Key 不落前端，由后端代理统一调用 DeepSeek
 - 顺带将本文件历史混入的 GBK 编码行统一转 UTF-8（内容不变）
 - `npm run type-check` 通过（提交人：Claw 助手 / cylinder137 授权）
+
+
+## 2026-09-03 ｜ 下载前拼图滑块人机验证
+- 新增 `components/SliderCaptcha.vue`：拖动图片填空式人机验证（纯前端 canvas 自绘背景图 + 随机缺口，无第三方依赖/无外部图片请求），支持指针拖拽、换一张、失败抖动提示、容差判定
+- `HomeView.vue`：点击「下载安装包」先弹验证，通过后自动开始下载（临时 `<a>` 触发避免弹窗拦截）；同一浏览器会话仅首次需要验证
+- `npm run type-check` 通过（提交人：Claw 助手 / cylinder137 授权）
