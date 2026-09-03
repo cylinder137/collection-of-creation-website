@@ -90,12 +90,14 @@ async function serveFile(req, res, baseDir, urlPath, allowFallback) {
   let st
   try {
     st = await stat(filePath)
+    if (!st.isFile()) throw new Error('not a file') // 目录/特殊文件按不存在处理
   } catch {
     if (allowFallback) {
       // SPA fallback：非资源请求回退到 index.html（hash 路由下主要起兜底作用）
       filePath = path.join(baseDir, 'index.html')
       try {
         st = await stat(filePath)
+        if (!st.isFile()) throw new Error('not a file')
       } catch {
         res.writeHead(404).end('Not Found - dist 不存在，请先 npm run build')
         return
@@ -151,7 +153,14 @@ async function serveFile(req, res, baseDir, urlPath, allowFallback) {
     res.end()
     return
   }
-  createReadStream(filePath, { start, end }).pipe(res)
+  const stream = createReadStream(filePath, { start, end })
+  // 客户端中途断开/读文件出错时静默收尾，绝不让错误冒泡崩溃进程
+  stream.on('error', () => {
+    if (!res.headersSent) res.writeHead(502).end('Read Error')
+    else res.destroy()
+  })
+  res.on('close', () => stream.destroy())
+  stream.pipe(res)
 }
 
 /**
@@ -214,7 +223,12 @@ const server = createServer(async (req, res) => {
 
     await serveFile(req, res, distDir, urlPath, true)
   } catch (e) {
-    res.writeHead(500).end('Internal Server Error')
+    // 响应头可能已发送（流式中途出错等），避免二次 writeHead 崩溃
+    if (!res.headersSent) {
+      res.writeHead(500).end('Internal Server Error')
+    } else {
+      res.destroy()
+    }
     console.error(color.red(`[serve-dist] ${req.url} -> ${e.message}`))
   }
 })
