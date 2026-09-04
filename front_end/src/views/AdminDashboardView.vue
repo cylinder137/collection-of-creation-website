@@ -1,26 +1,28 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, type Ref } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
-import { Refresh, Plus, Checked, Download, Warning, Delete, Upload, Picture, CircleClose } from '@element-plus/icons-vue'
+import { Refresh, Plus, Checked, Download, Warning, Delete, Upload, Picture, CircleClose, User } from '@element-plus/icons-vue'
 import { adminApi } from '@/api'
-import type { LicenseRecord, Order, Product, ProductInput } from '@/types'
+import type { LicenseRecord, Order, Product, ProductInput, UserDetail, UserInfo } from '@/types'
 import { LICENSE_STATUS, ORDER_STATUS } from '@/types'
 
 /**
  * 管理后台主界面
  *
- * 三个工作区：
- * - 订单核验：人工确认收款（待支付 → 已支付），驱动激活码可签发
+ * 四个工作区：
+ * - 订单核验：人工确认收款（待支付 → 已支付），驱动激活码可签发（列表带下单人联系方式）
+ * - 用户：买家用户列表（联系方式建档）+ 详情（名下订单 / 激活码）
  * - 激活码：全部签发记录 + 吊销
  * - 产品：增改 / 上下架，维护官网下载入口
  *
  * 所有接口走 /api/admin/**，每次请求自动携带令牌，后端逐次核验身份。
  */
 
-const activeTab = ref<'orders' | 'licenses' | 'products'>('orders')
+const activeTab = ref<'orders' | 'users' | 'licenses' | 'products'>('orders')
 const loading = ref(false)
 
 const orders = ref<Order[]>([])
+const users = ref<UserInfo[]>([])
 const licenses = ref<LicenseRecord[]>([])
 const products = ref<Product[]>([])
 
@@ -30,12 +32,14 @@ const pendingCount = computed(() => orders.value.filter((o) => o.status === 0).l
 async function loadAll() {
   loading.value = true
   try {
-    const [orderList, licenseList, productList] = await Promise.all([
+    const [orderList, userList, licenseList, productList] = await Promise.all([
       adminApi.listOrders(),
+      adminApi.listUsers(),
       adminApi.listLicenses(),
       adminApi.listProducts(),
     ])
     orders.value = orderList
+    users.value = userList
     licenses.value = licenseList
     products.value = productList
   } finally {
@@ -80,6 +84,26 @@ async function reviewReject(order: Order) {
   await adminApi.rejectOrder(order.orderNo)
   ElMessage.success('已拒收订单')
   await loadAll()
+}
+
+// ==================== 用户管理 ====================
+
+/** 用户详情抽屉数据（null = 未打开） */
+const userDetailVisible = ref(false)
+const userDetailLoading = ref(false)
+const currentUserDetail = ref<UserDetail | null>(null)
+
+async function openUserDetail(id: number) {
+  userDetailVisible.value = true
+  userDetailLoading.value = true
+  currentUserDetail.value = null
+  try {
+    currentUserDetail.value = await adminApi.userDetail(id)
+  } catch {
+    userDetailVisible.value = false
+  } finally {
+    userDetailLoading.value = false
+  }
 }
 
 // ==================== 激活码吊销 ====================
@@ -299,6 +323,12 @@ function fmtTime(t: string | null | undefined) {
         <el-table :data="orders" stripe>
           <el-table-column prop="orderNo" label="订单号" width="200" />
           <el-table-column prop="productName" label="产品" min-width="140" />
+          <el-table-column label="下单人联系方式" width="170">
+            <template #default="{ row }">
+              <span v-if="row.contact">{{ row.contact }}</span>
+              <span v-else class="cell-muted">—</span>
+            </template>
+          </el-table-column>
           <el-table-column label="金额" width="100">
             <template #default="{ row }">¥{{ row.amount }}</template>
           </el-table-column>
@@ -355,6 +385,54 @@ function fmtTime(t: string | null | undefined) {
             </template>
           </el-table-column>
           <template #empty>暂无订单</template>
+        </el-table>
+      </el-tab-pane>
+
+      <!-- ============ 用户管理 ============ -->
+      <el-tab-pane label="用户" name="users">
+        <el-alert
+          class="mb-3"
+          type="info"
+          :closable="false"
+          show-icon
+          title="买家按下单联系方式（手机/邮箱）自动建档，作为用户唯一标识（微信认证登录已废除）。"
+        />
+        <el-table :data="users" stripe>
+          <el-table-column prop="id" label="ID" width="70" />
+          <el-table-column prop="contact" label="联系方式" min-width="170">
+            <template #default="{ row }">
+              <span class="contact-cell">{{ row.contact }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="nickname" label="昵称" min-width="120">
+            <template #default="{ row }">
+              <span v-if="row.nickname">{{ row.nickname }}</span>
+              <span v-else class="cell-muted">—</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="email" label="邮箱" min-width="160">
+            <template #default="{ row }">
+              <span v-if="row.email">{{ row.email }}</span>
+              <span v-else class="cell-muted">—</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="订单数" width="90" align="center">
+            <template #default="{ row }">{{ row.orderCount }}</template>
+          </el-table-column>
+          <el-table-column label="激活码数" width="90" align="center">
+            <template #default="{ row }">{{ row.licenseCount }}</template>
+          </el-table-column>
+          <el-table-column label="首次下单" width="170">
+            <template #default="{ row }">{{ fmtTime(row.createdAt) }}</template>
+          </el-table-column>
+          <el-table-column label="操作" width="90" fixed="right">
+            <template #default="{ row }">
+              <el-button size="small" type="primary" plain :icon="User" @click="openUserDetail(row.id)">
+                详情
+              </el-button>
+            </template>
+          </el-table-column>
+          <template #empty>暂无买家用户（用户下单后自动建档）</template>
         </el-table>
       </el-tab-pane>
 
@@ -603,6 +681,81 @@ function fmtTime(t: string | null | undefined) {
         <el-button type="primary" :loading="productSaving" @click="saveProduct">保存</el-button>
       </template>
     </el-dialog>
+    <!-- 用户详情弹窗 -->
+    <el-dialog
+      v-model="userDetailVisible"
+      title="用户详情"
+      width="880px"
+      destroy-on-close
+    >
+      <div v-loading="userDetailLoading" class="user-detail">
+        <template v-if="currentUserDetail">
+          <el-descriptions :column="3" border class="mb-3">
+            <el-descriptions-item label="联系方式">
+              {{ currentUserDetail.user.contact }}
+            </el-descriptions-item>
+            <el-descriptions-item label="昵称">
+              {{ currentUserDetail.user.nickname || '—' }}
+            </el-descriptions-item>
+            <el-descriptions-item label="邮箱">
+              {{ currentUserDetail.user.email || '—' }}
+            </el-descriptions-item>
+            <el-descriptions-item label="订单数">
+              {{ currentUserDetail.user.orderCount }}
+            </el-descriptions-item>
+            <el-descriptions-item label="激活码数">
+              {{ currentUserDetail.user.licenseCount }}
+            </el-descriptions-item>
+            <el-descriptions-item label="首次下单">
+              {{ fmtTime(currentUserDetail.user.createdAt) }}
+            </el-descriptions-item>
+          </el-descriptions>
+
+          <div class="detail-block-title">名下订单（{{ currentUserDetail.orders.length }}）</div>
+          <el-table :data="currentUserDetail.orders" size="small" stripe class="mb-3">
+            <el-table-column prop="orderNo" label="订单号" width="190" />
+            <el-table-column prop="productName" label="产品" min-width="130" />
+            <el-table-column label="金额" width="90">
+              <template #default="{ row }">¥{{ row.amount }}</template>
+            </el-table-column>
+            <el-table-column label="状态" width="110">
+              <template #default="{ row }">
+                <el-tag :type="ORDER_STATUS[row.status]?.type ?? 'info'" size="small">
+                  {{ ORDER_STATUS[row.status]?.label ?? row.status }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="下单时间" width="160">
+              <template #default="{ row }">{{ fmtTime(row.createdAt) }}</template>
+            </el-table-column>
+            <template #empty>暂无订单</template>
+          </el-table>
+
+          <div class="detail-block-title">名下激活码（{{ currentUserDetail.licenses.length }}）</div>
+          <el-table :data="currentUserDetail.licenses" size="small" stripe>
+            <el-table-column label="激活码（机器码哈希-产品ID）" min-width="260">
+              <template #default="{ row }">
+                <el-tooltip :content="row.licenseKey" placement="top">
+                  <code class="license-key">{{ row.licenseKey }}</code>
+                </el-tooltip>
+              </template>
+            </el-table-column>
+            <el-table-column prop="productName" label="产品" width="140" />
+            <el-table-column label="状态" width="110">
+              <template #default="{ row }">
+                <el-tag :type="LICENSE_STATUS[row.status]?.type ?? 'info'" size="small">
+                  {{ LICENSE_STATUS[row.status]?.label ?? row.status }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="签发时间" width="160">
+              <template #default="{ row }">{{ fmtTime(row.issuedAt) }}</template>
+            </el-table-column>
+            <template #empty>暂无激活码</template>
+          </el-table>
+        </template>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -685,6 +838,22 @@ function fmtTime(t: string | null | undefined) {
 
 .mb-3 {
   margin-bottom: 12px;
+}
+
+.contact-cell {
+  font-weight: 600;
+  color: var(--brand-color);
+}
+
+.user-detail {
+  min-height: 120px;
+}
+
+.detail-block-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin: 2px 0 8px;
 }
 
 .refresh-bar {

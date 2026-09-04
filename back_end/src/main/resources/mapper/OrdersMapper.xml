@@ -29,6 +29,30 @@
         SELECT COUNT(*) FROM orders WHERE product_id = #{productId}
     </select>
 
+    <select id="selectByUserId" resultType="com.zaowuji.back.entity.Orders">
+        SELECT <include refid="allColumns"/>
+        FROM orders
+        WHERE user_id = #{userId}
+        ORDER BY id DESC
+    </select>
+
+    <!-- 管理端订单列表：带下单人联系方式，金额分 → 元 -->
+    <select id="selectAllWithUser" resultType="com.zaowuji.back.vo.OrderVO">
+        SELECT o.id,
+               o.order_no    AS orderNo,
+               o.user_id     AS userId,
+               u.contact,
+               o.product_id  AS productId,
+               o.product_name AS productName,
+               CAST(o.amount / 100.0 AS DECIMAL(10, 2)) AS amount,
+               o.status,
+               o.paid_at     AS paidAt,
+               o.created_at  AS createdAt
+        FROM orders o
+        LEFT JOIN `user` u ON u.id = o.user_id
+        ORDER BY o.id DESC
+    </select>
+
     <update id="updateStatus">
         UPDATE orders
         SET status = #{status},

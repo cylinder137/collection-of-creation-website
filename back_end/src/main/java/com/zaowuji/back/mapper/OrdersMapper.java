@@ -1,6 +1,7 @@
 package com.zaowuji.back.mapper;
 
 import com.zaowuji.back.entity.Orders;
+import com.zaowuji.back.vo.OrderVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -20,6 +21,12 @@ public interface OrdersMapper {
 
     /** 按产品统计订单数量（删除产品前保护性检查） */
     int countByProductId(@Param("productId") Long productId);
+
+    /** 某用户下的全部订单（新 → 旧） */
+    List<Orders> selectByUserId(@Param("userId") Long userId);
+
+    /** 管理端订单列表：LEFT JOIN user 带出下单人联系方式（新 → 旧，金额已换算为元） */
+    List<OrderVO> selectAllWithUser();
 
     int insert(Orders orders);
 

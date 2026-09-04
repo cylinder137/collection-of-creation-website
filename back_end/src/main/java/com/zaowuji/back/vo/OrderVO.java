@@ -12,6 +12,10 @@ import java.time.LocalDateTime;
 public class OrderVO {
     private Long id;
     private String orderNo;
+    /** 下单用户 ID（管理端列表返回） */
+    private Long userId;
+    /** 下单人联系方式（管理端列表返回，人工核验收款时核对用） */
+    private String contact;
     private Long productId;
     private String productName;
     /** 金额（元） */
@@ -22,8 +26,6 @@ public class OrderVO {
     private LocalDateTime paidAt;
     /** 下单时间 */
     private LocalDateTime createdAt;
-    /** 用户联系方式（下单时填写，管理员核验用） */
-    private String contact;
     /** 该订单激活码状态（0未激活 1已激活 2已吊销 3已过期；未签发为 null） */
     private Integer licenseStatus;
 }

@@ -46,6 +46,10 @@ export interface ProductInput {
 export interface Order {
   id: number
   orderNo: string
+  /** 下单用户 ID（管理端列表返回） */
+  userId: number | null
+  /** 下单人联系方式（管理端列表返回，人工核验收款核对用） */
+  contact: string | null
   productId: number
   productName: string
   /** 金额（元） */
@@ -58,6 +62,28 @@ export interface Order {
   contact: string | null
   /** 该订单激活码状态（0未激活 1已激活 2已吊销 3已过期；未签发为 null） */
   licenseStatus: number | null
+}
+
+/** 买家用户（对齐后端 UserVO，管理后台用） */
+export interface UserInfo {
+  id: number
+  /** 联系方式（手机/邮箱），用户唯一标识 */
+  contact: string
+  nickname: string | null
+  email: string | null
+  createdAt: string
+  updatedAt: string
+  /** 累计订单数 */
+  orderCount: number
+  /** 累计激活码数 */
+  licenseCount: number
+}
+
+/** 用户详情（对齐后端 UserDetailVO）：基本信息 + 名下订单 + 名下激活码 */
+export interface UserDetail {
+  user: UserInfo
+  orders: Order[]
+  licenses: LicenseRecord[]
 }
 
 /** 激活码签发记录（对齐后端 LicenseVO） */

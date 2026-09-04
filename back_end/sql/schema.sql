@@ -46,19 +46,20 @@ CREATE TABLE `product` (
 
 -- ============================================================
 -- 2. 买家用户表 user（user 为 MySQL 保留字，访问时需用反引号）
+--    说明：微信认证登录已废除（2026-09），用户以联系方式（手机/邮箱）为唯一标识；
+--    与迁移脚本 V2__user_dewechat.sql 保持一致。
 -- ============================================================
 DROP TABLE IF EXISTS `user`;
 CREATE TABLE `user` (
   `id`         BIGINT       NOT NULL AUTO_INCREMENT COMMENT '主键',
-  `openid`     VARCHAR(64)  NOT NULL                COMMENT '微信 openid',
-  `unionid`    VARCHAR(64)  DEFAULT NULL            COMMENT '微信 unionid',
+  `contact`    VARCHAR(100) NOT NULL                COMMENT '联系方式（手机/邮箱），用户唯一标识',
   `nickname`   VARCHAR(100) DEFAULT NULL            COMMENT '昵称',
   `phone`      VARCHAR(64)  DEFAULT NULL            COMMENT '手机号（AES 加密后存储，禁止明文；个保法敏感个人信息）',
   `email`      VARCHAR(100) DEFAULT NULL            COMMENT '邮箱',
   `created_at` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `updated_at` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_user_openid` (`openid`)
+  UNIQUE KEY `uk_user_contact` (`contact`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='买家用户表';
 
 -- ============================================================

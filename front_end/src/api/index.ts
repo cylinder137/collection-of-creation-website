@@ -6,6 +6,8 @@ import type {
   AdminLoginResult,
   AdminProfile,
   LicenseRecord,
+  UserInfo,
+  UserDetail,
 } from '@/types'
 
 /** 产品（官网公开接口：展示 + 下载） */
@@ -37,6 +39,18 @@ export const adminApi = {
   /** 当前管理员信息（顺带校验令牌是否仍然有效） */
   me() {
     return request<AdminProfile>({ url: '/admin/me', method: 'get' })
+  },
+
+  // ---------- 买家用户 ----------
+
+  /** 用户列表（新 → 旧，含订单数/激活码数） */
+  listUsers() {
+    return request<UserInfo[]>({ url: '/admin/users', method: 'get' })
+  },
+
+  /** 用户详情（基本信息 + 名下订单 + 名下激活码） */
+  userDetail(id: number) {
+    return request<UserDetail>({ url: `/admin/users/${id}`, method: 'get' })
   },
 
   // ---------- 订单 ----------

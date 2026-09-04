@@ -54,9 +54,17 @@
 - WebConfig 静态映射 /uploads/**；产品实体/VO/入参/XML 全链路加 payQrUrl
 - 文档：新建 docs/API接口文档.md（总接口文档，含 Base URL）；删除过时的 back_end/后端接口文档.md 与根 DEPLOYMENT.md（已备份 archives）
 
+## 2026-09-03 ｜ 买家用户数据接口落地（user 表去微信化，提交人：frontend-engineer / cylinder137 授权）
+- 微信认证登录方式已废除：Flyway V4 迁移 `V4__user_dewechat.sql`（合并 main 时由 V2 改名，避开已有 V2__download_url）——user 表删除 openid/unionid 列及其唯一索引，新增 `contact`（手机/邮箱）为 NOT NULL 唯一标识；存量 `contact_` 前缀占位数据无损还原；同步更新 `sql/schema.sql` 全量脚本
+- User 实体/Mapper 去微信化：selectByOpenid → selectByContact；新增 `selectAllWithStats`（用户列表含订单数/激活码数统计）
+- OrderService 下单建档改造：联系方式 trim 后按 user.contact 查找/建档（DuplicateKey 并发兜底幂等），替换原 openid 占位写入
+- 管理端订单列表带下单人联系方式：OrdersMapper 新增 `selectAllWithUser`（LEFT JOIN user，金额分→元），OrderVO 增 userId/contact 字段（C 端查询接口不回填，避免泄露他人联系方式）
+- 激活码签发绑定用户：ActivationService 携带订单号签发时，license/device 记录 userId（订单所属买家），打通「用户 → 激活码」追溯链
+- 新增管理端买家用户接口：UserController + UserService —— `GET /api/admin/users`（列表）、`GET /api/admin/users/{id}`（详情：基本信息 + 名下订单 + 名下激活码），走既有 /api/admin Bearer 鉴权
+
 ## 2026-09-03 ｜ 订单拒收 + 订单核验信息增强 + verify 修复（提交人：Tinker / cylinder137 授权）
 - 新增 POST /api/admin/orders/{orderNo}/reject 拒收接口：账单不符 → 订单置为已取消(2)；若已签发激活码则一并吊销（license.status=2 + revoked_at），客户端在线核验立即失败；幂等（重复拒收直接返回）
-- OrderVO 增加核验辅助字段：contact（用户联系方式，user.nickname）与 licenseStatus（该订单激活码状态）；订单列表/详情/核验接口均返回
+- OrderVO 增加核验辅助字段：contact（用户联系方式）与 licenseStatus（该订单激活码状态）；订单列表/详情/核验接口均返回
 - 修复 GET /api/license-key/verify 强制要求 sign/machineCode 导致客户端只传 code 必 500 的问题：改为 code 必填（查库吊销检查）+ sign/machineCode 选填（增强验签/绑定校验）
 - LicenseMapper 新增 selectByOrderId（拒收吊销用）
 
